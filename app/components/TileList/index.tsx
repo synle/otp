@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useOtpIdentityList, useOtpIdentityById } from "~/utils/frontend/Hooks";
 import {
   Box,
@@ -10,35 +10,30 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { toast } from "react-toastify";
+import * as qrcode from "qrcode";
 
 function TileItem(props: any) {
   const { item } = props;
   const { data, isLoading } = useOtpIdentityById(item.id);
+  const [qrCode, setQrCode] = useState("");
+
+  useEffect(() => {
+    async function _load() {
+      setQrCode(await qrcode.toDataURL(item.login.totp));
+    }
+    _load();
+  }, [item.login.totp]);
 
   function copyTextToClipboard(text?: string) {
     if (!text) {
       return;
     }
 
-    // Create a new text area element to temporarily hold the text
     const textArea = document.createElement("textarea");
     textArea.value = text;
-
-    // Set the text area's position to be off-screen
-    // textArea.style.position = 'fixed';
-    // textArea.style.top = '0';
-    // textArea.style.left = '0';
-    // textArea.style.width = '2em'; // Set a small width
-    // textArea.style.height = '2em'; // Set a small height
-
-    // Append the text area to the document
     document.body.appendChild(textArea);
-
-    // Select and copy the text inside the text area
     textArea.select();
     document.execCommand("copy");
-
-    // Remove the text area from the document
     document.body.removeChild(textArea);
 
     toast.dismiss();
@@ -49,7 +44,7 @@ function TileItem(props: any) {
   }
 
   return (
-    <Paper sx={{ py: 1, px: 2 }}>
+    <Paper sx={{ py: 1, px: 2 }} elevation={3}>
       <Typography
         sx={{
           color: "text.disabled",
@@ -59,6 +54,7 @@ function TileItem(props: any) {
       >
         {item.name}
       </Typography>
+      <img src={qrCode} />
       <Typography variant="h3">
         <Link
           onClick={isLoading ? () => {} : () => copyTextToClipboard(data)}
