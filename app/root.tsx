@@ -28,6 +28,8 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { useMeProfile } from "~/utils/frontend/Hooks";
 import Loading from "~/components/Loading";
 import { useState } from "react";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -105,7 +107,7 @@ function App() {
           <Toolbar sx={{ display: "flex", gap: 2 }}>
             <Link href="/" sx={{ marginRight: "auto" }} underline="hover">
               <Typography variant="h5" sx={linkStyles}>
-                Sample App
+                OTP
               </Typography>
             </Link>
             <Box>
@@ -164,6 +166,7 @@ export default function () {
         <CssBaseline />
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>
+            <ToastContainer />
             <CssBaseline />
             <App />
           </ThemeProvider>

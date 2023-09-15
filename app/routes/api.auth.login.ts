@@ -5,7 +5,7 @@ import {
   confidentialClientApplication,
 } from "~/utils/backend/SSO";
 
-export const loader: LoaderFunction = async () => {
+export async function loader() {
   try {
     const loginUrl = await confidentialClientApplication.getAuthCodeUrl({
       scopes: SCOPE,
@@ -17,4 +17,4 @@ export const loader: LoaderFunction = async () => {
       status: 400,
     });
   }
-};
+}

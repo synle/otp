@@ -14,7 +14,7 @@ function getInitials(fullName: string) {
     .toUpperCase();
 }
 
-export const loader: LoaderFunction = async (args: LoaderArgs) => {
+export async function loader(args: LoaderArgs) {
   const { request } = args;
   try {
     const session = await getSession(request.headers.get("Cookie"));
@@ -39,4 +39,4 @@ export const loader: LoaderFunction = async (args: LoaderArgs) => {
   } catch (error) {
     return `Failed to get me - ${error}`;
   }
-};
+}

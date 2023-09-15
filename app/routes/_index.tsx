@@ -1,5 +1,7 @@
 import { useMeProfile } from "~/utils/frontend/Hooks";
 import DataTable, { ColumnFilter } from "~/components/DataTable";
+import TileList from "~/components/TileList";
+import { Box, Typography } from "@mui/material";
 
 export default function Index() {
   const { data: profile, isLoading } = useMeProfile();
@@ -12,30 +14,10 @@ export default function Index() {
     return null;
   }
 
-  // generate dummy an array of data to be shown for table
-  const data = Object.entries(profile).map(([key, value]) => ({ key, value }));
-
   return (
-    <>
-      <pre>{JSON.stringify(profile, null, 2)}</pre>
-      <DataTable
-        data={data}
-        columns={[
-          {
-            Header: "Key",
-            accessor: "key",
-            Filter: ColumnFilter,
-            Cell: (cell) => {
-              return <strong>{cell.value}</strong>;
-            },
-          },
-          {
-            Header: "Value",
-            accessor: "value",
-            Filter: ColumnFilter,
-          },
-        ]}
-      />
-    </>
+    <Box sx={{ display: "flex", gap: 2, flexDirection: "column" }}>
+      <Typography>Hello {profile.fullName}.</Typography>
+      <TileList />
+    </Box>
   );
 }
