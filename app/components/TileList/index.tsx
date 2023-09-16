@@ -7,13 +7,16 @@ import {
   TextField,
   InputAdornment,
   Link,
+  Checkbox,
+  Button,
+  FormControlLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { toast } from "react-toastify";
 import * as qrcode from "qrcode";
 
 function TileItem(props: any) {
-  const { item } = props;
+  const { item, showQrCode } = props;
   const { data, isLoading } = useOtpIdentityById(item.id);
   const [qrCode, setQrCode] = useState("");
 
@@ -44,7 +47,7 @@ function TileItem(props: any) {
   }
 
   return (
-    <Paper sx={{ py: 1, px: 2 }} elevation={3}>
+    <Paper sx={{ py: 1, px: 2, textAlign: "center" }} elevation={3}>
       <Typography
         sx={{
           color: "text.disabled",
@@ -54,16 +57,20 @@ function TileItem(props: any) {
       >
         {item.name}
       </Typography>
-      <img src={qrCode} />
-      <Typography variant="h3">
-        <Link
-          onClick={isLoading ? () => {} : () => copyTextToClipboard(data)}
-          underline="hover"
-          sx={{ cursor: "pointer" }}
-        >
-          {data || "......"}
-        </Link>
-      </Typography>
+      {showQrCode ? (
+        <img src={qrCode} style={{ marginLeft: "-1rem" }} />
+      ) : (
+        <Typography variant="h3">
+          <Link
+            component={Button}
+            onClick={isLoading ? () => {} : () => copyTextToClipboard(data)}
+            underline="hover"
+            sx={{ cursor: "pointer" }}
+          >
+            {data || "......"}
+          </Link>
+        </Typography>
+      )}
     </Paper>
   );
 }
@@ -71,6 +78,7 @@ function TileItem(props: any) {
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
   const [q, setQ] = useState("");
+  const [showQrCode, setShowQrCode] = useState(false);
 
   const items = useMemo(() => {
     if (q) {
@@ -91,7 +99,9 @@ export default function () {
   }
 
   if (!items || items.length === 0) {
-    return <>No data</>;
+    if (!q) {
+      return <>No data</>;
+    }
   }
 
   return (
@@ -130,6 +140,16 @@ export default function () {
           ),
         }}
       />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={showQrCode}
+            onChange={() => setShowQrCode(!showQrCode)}
+            color="primary"
+          />
+        }
+        label="Show / Hide QR Code"
+      />
       <Box
         sx={{
           ".TileList": {
@@ -160,7 +180,13 @@ export default function () {
       >
         <Box className="TileList">
           {items.map((item) => {
-            return <TileItem key={item.id} item={item}></TileItem>;
+            return (
+              <TileItem
+                key={item.id}
+                item={item}
+                showQrCode={showQrCode}
+              ></TileItem>
+            );
           })}
         </Box>
       </Box>
