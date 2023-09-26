@@ -1,9 +1,5 @@
 import { redirect, LoaderFunction } from "@remix-run/node";
-import {
-  REDIRECT_PATH,
-  SCOPE,
-  confidentialClientApplication,
-} from "~/utils/backend/SSO";
+import { SCOPE, confidentialClientApplication } from "~/utils/backend/SSO";
 import type { LoaderArgs } from "@remix-run/node";
 import { getSession, commitSession } from "~/utils/backend/Session";
 import axios from "axios";
@@ -12,10 +8,11 @@ export const loader: LoaderFunction = async (args: LoaderArgs) => {
   const { request } = args;
   try {
     const url = new URL(request.url);
+    const redirectUri = url.searchParams.get("state") || "";
 
     const response = await confidentialClientApplication.acquireTokenByCode({
       scopes: SCOPE,
-      redirectUri: REDIRECT_PATH,
+      redirectUri,
       ...{
         code: url.searchParams.get("code") || "",
         client_info: url.searchParams.get("client_info") || "",
