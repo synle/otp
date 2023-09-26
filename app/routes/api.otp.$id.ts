@@ -3,7 +3,10 @@ import type { LoaderArgs, ActionArgs } from "@remix-run/node";
 import { getSession, SessionData } from "~/utils/backend/Session";
 import { authenticator } from "otplib";
 import { getOtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
-import { updateOtpIdentity } from "~/utils/backend/OtpIdentityDAO";
+import {
+  deleteOtpIdentity,
+  updateOtpIdentity,
+} from "~/utils/backend/OtpIdentityDAO";
 
 export async function loader(args: LoaderArgs) {
   const { request, params } = args;
@@ -67,14 +70,13 @@ export async function action(args: ActionArgs) {
         status: 200,
       });
     case "DELETE":
-      // TODO: implement me
-      break;
+      await deleteOtpIdentity(email, id);
+
+      return new Response("OK", {
+        status: 200,
+      });
     default:
       //TODO: throw not supported
       break;
   }
-
-  return new Response(`Unauthorized`, {
-    status: 401,
-  });
 }

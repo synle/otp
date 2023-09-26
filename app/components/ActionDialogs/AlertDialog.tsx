@@ -38,13 +38,13 @@ export default function AlertDialog(
             {props.message}
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
           {props.isConfirm ? (
             <>
-              <Button onClick={props.onDismiss}>{props.noLabel || "No"}</Button>
               <Button onClick={props.onYesClick} autoFocus variant="contained">
                 {props.yesLabel || "Yes"}
               </Button>{" "}
+              <Button onClick={props.onDismiss}>{props.noLabel || "No"}</Button>
             </>
           ) : (
             <>

@@ -48,3 +48,16 @@ export function useUpdateOtpIdentity(id: string) {
     }
   );
 }
+
+export function useDeleteOtpIdentity(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    () => axios.delete(`/api/otp/${id}`).then((r) => r.data as string),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("otp_list");
+      },
+    }
+  );
+}
