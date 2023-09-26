@@ -9,6 +9,7 @@ A basic web application developed using Remix.js and React. This app offers Azur
 ![image](https://github.com/synle/otp/assets/3792401/d2af4f61-3f03-4217-8d5d-1cfd0bf48e69)
 
 ### How to start?
+
 Update the .env file for the Azure AD login. Then rename the file as `.env`.
 
 ```bash

@@ -75,16 +75,18 @@ export default function () {
           ),
         }}
       />
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={showQrCode}
-            onChange={() => setShowQrCode(!showQrCode)}
-            color="primary"
-          />
-        }
-        label="Show / Hide QR Code"
-      />
+      <Box>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showQrCode}
+              onChange={() => setShowQrCode(!showQrCode)}
+              color="primary"
+            />
+          }
+          label="Show / Hide QR Code"
+        />
+      </Box>
       <Box
         sx={{
           ".TileList": {

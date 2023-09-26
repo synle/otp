@@ -53,6 +53,7 @@ export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           label="Name"
+          autoFocus
           required
         />
         <TextField defaultValue={item.login.totp} label="TOTP" disabled />
