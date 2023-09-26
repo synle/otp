@@ -1,4 +1,4 @@
-import { useState, useRef,useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useOtpIdentityList } from "~/utils/frontend/Hooks";
 import {
   Box,
