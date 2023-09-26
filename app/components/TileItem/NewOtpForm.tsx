@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useState, useEffect, useRef } from "react";
 import { useOtpIdentityById } from "~/utils/frontend/hooks/OtpIdentity";
 import { Box, Typography, Button, TextField } from "@mui/material";
@@ -14,7 +16,7 @@ function ScanQrCodeView(){
 
   useEffect(() => {
     async function _load(){
-      //@ts-ignore
+      // //@ts-ignore
       const videoElement = myDivRef.current;
 
       if (videoElement) {
@@ -24,6 +26,28 @@ function ScanQrCodeView(){
         // Assign the camera stream to the video element
         //@ts-ignore
         videoElement.srcObject = stream;
+
+        const videoElement = document.getElementById('camera');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        // Assign the camera stream to the video element
+        videoElement.srcObject = stream;
+
+        // scanner
+        let scanner = new Instascan.Scanner({ video: videoElement });
+
+        scanner.addListener('scan', function (content) {
+          console.log('>> code scan', content);
+        });
+        Instascan.Camera.getCameras().then(function (cameras) {
+          if (cameras.length > 0) {
+            scanner.start(cameras[0]);
+          } else {
+            console.error('No cameras found.');
+          }
+        }).catch(function (e) {
+          console.error(e);
+        });
       }
     }
     _load();
