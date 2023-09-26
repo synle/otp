@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import axios from "axios";
 import type { SessionData } from "~/utils/backend/Session";
-import { OtpIdentityResponse } from "~/routes/api.otp";
+import { OtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
 
 export function useMeProfile() {
   return useQuery(
@@ -32,5 +32,12 @@ export function useOtpIdentityById(id: string) {
       retry: false,
       refetchInterval: 5000,
     }
+  );
+}
+
+
+export function useUpdateOtpIdentity(id: string) {
+  return useMutation(
+    (body: {name: string}) => axios.put(`/api/otp/${id}`, body).then( r=> r.data as string)
   );
 }

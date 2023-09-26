@@ -4,7 +4,8 @@ import { Box, Paper, Typography, Link, Button, TextField } from "@mui/material";
 import { toast } from "react-toastify";
 import * as qrcode from "qrcode";
 import { useActionDialogs } from "~/utils/frontend/hooks/useActionDialogs";
-import { OtpIdentity } from "~/routes/api.otp";
+import { OtpIdentity } from "~/utils/backend/OtpIdentityDAO";
+import { useUpdateOtpIdentity } from "~/utils/frontend/Hooks";
 
 type TileItemProps = {
   showQrCode: boolean;
@@ -15,12 +16,14 @@ export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
   const { item, qrCode } = props;
   const { dismiss } = useActionDialogs();
   const [name, setName] = useState(item.name);
+  const { mutateAsync, isLoading } = useUpdateOtpIdentity(item.id);
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
         try {
+          await mutateAsync({name});
           dismiss();
         } catch (err) {}
       }}
@@ -30,20 +33,19 @@ export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           label="Name"
-          label="Name"
+          required
         />
         <TextField
           defaultValue={item.login.totp}
-          label="TOTP"
           label="TOTP"
           disabled
         />
         <img src={qrCode} style={{ marginLeft: "-1rem", width: "150px" }} />
         <Box sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
-          <Button type="submit" variant="contained">
+          <Button type="submit" variant="contained" disabled={isLoading}>
             Save
           </Button>
-          <Button onClick={() => dismiss()}>Cancel</Button>
+          <Button onClick={() => dismiss()} disabled={isLoading}>Cancel</Button>
         </Box>
       </Box>
     </form>

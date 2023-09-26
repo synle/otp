@@ -67,7 +67,7 @@ export default function () {
             <InputAdornment position="start">
               <SearchIcon />
               <datalist id="otpItemNames">
-                {items.map((item) => {
+                {items?.map((item) => {
                   return <option value={item.name} />;
                 })}
               </datalist>
@@ -114,7 +114,7 @@ export default function () {
         }}
       >
         <Box className="TileList">
-          {items.map((item) => {
+          {items?.map((item) => {
             return (
               <TileItem
                 key={item.id}
