@@ -5,27 +5,13 @@ import * as fs from "fs";
 
 export type OtpIdentity = {
   id: string;
-  organizationId?: string;
-  folderId: string;
-  type: number;
-  reprompt: number;
   name: string;
-  notes?: string;
-  favorite: boolean;
   login: {
-    username?: string;
-    password?: string;
     totp: string;
   };
-  collectionIds?: string;
 };
 
 export type OtpIdentityResponse = {
-  encrypted: boolean;
-  folders: Array<{
-    id: string;
-    name: string;
-  }>;
   items: OtpIdentity[];
 };
 
