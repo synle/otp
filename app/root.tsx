@@ -30,6 +30,7 @@ import Loading from "~/components/Loading";
 import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import ActionDialogs from "~/components/ActionDialogs";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -169,6 +170,7 @@ export default function () {
             <ToastContainer />
             <CssBaseline />
             <App />
+            <ActionDialogs />
           </ThemeProvider>
         </QueryClientProvider>
         <ScrollRestoration />
