@@ -60,11 +60,11 @@ export async function action(args: ActionArgs) {
   switch (args.request.method?.toUpperCase()) {
     case "PUT":
       // update link
-      const body: {name: string} = await args.request.json();
-      await updateOtpIdentity(email, id, body)
+      const body: { name: string } = await args.request.json();
+      await updateOtpIdentity(email, id, body);
 
-      return new Response('OK', {
-        status: 200
+      return new Response("OK", {
+        status: 200,
       });
     case "DELETE":
       // TODO: implement me

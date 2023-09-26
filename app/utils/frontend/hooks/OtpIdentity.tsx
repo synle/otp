@@ -35,9 +35,16 @@ export function useOtpIdentityById(id: string) {
   );
 }
 
-
 export function useUpdateOtpIdentity(id: string) {
+  const queryClient = useQueryClient();
+
   return useMutation(
-    (body: {name: string}) => axios.put(`/api/otp/${id}`, body).then( r=> r.data as string)
+    (body: { name: string }) =>
+      axios.put(`/api/otp/${id}`, body).then((r) => r.data as string),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("otp_list");
+      },
+    }
   );
 }

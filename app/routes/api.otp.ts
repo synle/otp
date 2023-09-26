@@ -3,7 +3,6 @@ import type { LoaderArgs } from "@remix-run/node";
 import { getSession } from "~/utils/backend/Session";
 import { getOtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
 
-
 export async function loader(args: LoaderArgs) {
   const { request } = args;
   try {
