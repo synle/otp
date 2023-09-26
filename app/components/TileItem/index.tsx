@@ -8,6 +8,7 @@ import {
   Button,
   TextField,
   IconButton,
+  Skeleton,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import * as qrcode from "qrcode";
@@ -42,6 +43,36 @@ const onCopyToClipboard = (text?: string) => {
     autoClose: 3000, // Duration in milliseconds
   });
 };
+
+export function OtpCode(props: { data?: string; isLoading?: boolean }) {
+  const { data, isLoading } = props;
+
+  return (
+    <Typography
+      variant="h4"
+      sx={{
+        fontFamily: "monospace",
+      }}
+    >
+      <Link
+        component={Button}
+        onClick={() => {
+          if (!isLoading) {
+            onCopyToClipboard(data);
+          }
+        }}
+        underline="none"
+        sx={{ cursor: "pointer" }}
+      >
+        {isLoading ? (
+          <Skeleton animation="wave" height={42} width={120} />
+        ) : (
+          data
+        )}
+      </Link>
+    </Typography>
+  );
+}
 
 export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
   const { item, qrCode } = props;
@@ -79,16 +110,7 @@ export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
           <Typography sx={{ color: "text.disabled", fontWeight: "bold" }}>
             Code
           </Typography>
-          <Typography variant="h4">
-            <Link
-              component={Button}
-              onClick={isLoading ? () => {} : () => onCopyToClipboard(data)}
-              underline="none"
-              sx={{ cursor: "pointer" }}
-            >
-              {data || "......"}
-            </Link>
-          </Typography>
+          <OtpCode data={data} isLoading={isLoading} />
         </Box>
         <Box sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
           <Button type="submit" variant="contained" disabled={isSaving}>
@@ -163,16 +185,7 @@ export default function (props: TileItemProps) {
         <img src={qrCode} style={{ marginLeft: "-1rem" }} />
       ) : (
         <Box sx={{ display: "flex", gap: 3 }}>
-          <Typography variant="h4">
-            <Link
-              component={Button}
-              onClick={isLoading ? () => {} : () => onCopyToClipboard(data)}
-              underline="none"
-              sx={{ cursor: "pointer" }}
-            >
-              {data || "......"}
-            </Link>
-          </Typography>
+          <OtpCode data={data} isLoading={isLoading} />
           <IconButton
             aria-label="Delete"
             disabled={isDeleting}
