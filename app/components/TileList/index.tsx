@@ -1,79 +1,14 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useOtpIdentityList, useOtpIdentityById } from "~/utils/frontend/Hooks";
+import { useState, useRef,useMemo } from "react";
+import { useOtpIdentityList } from "~/utils/frontend/Hooks";
 import {
   Box,
-  Paper,
-  Typography,
   TextField,
   InputAdornment,
-  Link,
   Checkbox,
-  Button,
   FormControlLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { toast } from "react-toastify";
-import * as qrcode from "qrcode";
-
-function TileItem(props: any) {
-  const { item, showQrCode } = props;
-  const { data, isLoading } = useOtpIdentityById(item.id);
-  const [qrCode, setQrCode] = useState("");
-
-  useEffect(() => {
-    async function _load() {
-      setQrCode(await qrcode.toDataURL(item.login.totp));
-    }
-    _load();
-  }, [item.login.totp]);
-
-  function copyTextToClipboard(text?: string) {
-    if (!text) {
-      return;
-    }
-
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textArea);
-
-    toast.dismiss();
-    toast.success(`Code ${text} copied to clipboard`, {
-      position: "top-right",
-      autoClose: 3000, // Duration in milliseconds
-    });
-  }
-
-  return (
-    <Paper sx={{ py: 1, px: 2, textAlign: "center" }} elevation={3}>
-      <Typography
-        sx={{
-          color: "text.disabled",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-        }}
-      >
-        {item.name}
-      </Typography>
-      {showQrCode ? (
-        <img src={qrCode} style={{ marginLeft: "-1rem" }} />
-      ) : (
-        <Typography variant="h3">
-          <Link
-            component={Button}
-            onClick={isLoading ? () => {} : () => copyTextToClipboard(data)}
-            underline="hover"
-            sx={{ cursor: "pointer" }}
-          >
-            {data || "......"}
-          </Link>
-        </Typography>
-      )}
-    </Paper>
-  );
-}
+import TileItem from "~/components/TileItem";
 
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
