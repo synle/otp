@@ -192,6 +192,8 @@ export default function () {
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
+        <script src="https://cdn.rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+
       </head>
       <body>
         <CssBaseline />

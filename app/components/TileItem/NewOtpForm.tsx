@@ -7,7 +7,6 @@ import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
-import * as Instascan from 'instascan'
 
 
 function ScanQrCodeView(){
@@ -25,21 +24,6 @@ function ScanQrCodeView(){
         // Assign the camera stream to the video element
         //@ts-ignore
         videoElement.srcObject = stream;
-
-        let scanner = new Instascan.Scanner({ video: videoElement });
-        scanner.addListener('scan', function (content) {
-          console.log('>>>> scan: ', content);
-        });
-        Instascan.Camera.getCameras().then(function (cameras) {
-          if (cameras.length > 0) {
-            scanner.start(cameras[0]);
-          } else {
-            console.error('No cameras found.');
-          }
-        }).catch(function (e) {
-          console.error(e);
-        });
-
       }
     }
     _load();
