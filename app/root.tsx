@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction } from "@remix-run/node";
 import {
@@ -22,6 +23,7 @@ import {
   Menu,
   MenuItem,
   Divider,
+  useMediaQuery,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -36,7 +38,6 @@ export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
 
-const theme = createTheme({});
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -60,6 +61,16 @@ const queryClient = new QueryClient({
 
 function AppContextReducer(props: { children: JSX.Element | JSX.Element[] }) {
   const contexts = [ActionDialogsContext];
+
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+
+  const theme = useMemo(() => {
+    return createTheme({
+      palette: {
+        mode: prefersDarkMode ? "dark" : "light",
+      },
+    });
+  }, [prefersDarkMode]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -117,7 +128,7 @@ function App() {
     );
   } else {
     const linkStyles = {
-      color: "background.default",
+      color: "text.disabled",
       fontWeight: "bold",
     };
 
