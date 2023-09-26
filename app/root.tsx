@@ -30,7 +30,7 @@ import Loading from "~/components/Loading";
 import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import ActionDialogs from "~/components/ActionDialogs";
+import ActionDialogsContext from "~/utils/frontend/hooks/ActionDialogs";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -57,6 +57,25 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function AppContextReducer(props: { children: JSX.Element | JSX.Element[] }) {
+  const contexts = [ActionDialogsContext];
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <ToastContainer />
+        <CssBaseline />
+        {contexts.reduceRight(
+          (acc, ContextProvider) => (
+            <ContextProvider>{acc}</ContextProvider>
+          ),
+          <>{props.children}</>
+        )}
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 function App() {
   const { data: meProfile, isLoading } = useMeProfile();
@@ -165,14 +184,9 @@ export default function () {
       </head>
       <body>
         <CssBaseline />
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={theme}>
-            <ToastContainer />
-            <CssBaseline />
-            <App />
-            <ActionDialogs />
-          </ThemeProvider>
-        </QueryClientProvider>
+        <AppContextReducer>
+          <App />
+        </AppContextReducer>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

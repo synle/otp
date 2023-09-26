@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "react-query";
+import { createContext, useContext, useState } from "react";
 import { AlertInput } from "~/components/ActionDialogs/AlertDialog";
 import {
   ChoiceInput,
@@ -6,6 +6,7 @@ import {
 } from "~/components/ActionDialogs/ChoiceDialog";
 import { ModalInput } from "~/components/ActionDialogs/ModalDialog";
 import { PromptInput } from "~/components/ActionDialogs/PromptDialog";
+import ActionDialogs from "~/components/ActionDialogs";
 
 type AlertActionDialog = AlertInput & {
   type: "alert";
@@ -42,18 +43,35 @@ type ActionDialog =
   | ChoiceActionDialog
   | ModalActionDialog;
 
-const QUERY_KEY_ACTION_DIALOGS = "actionDialogs";
 let _actionDialogs: ActionDialog[] = [];
 
-export function useActionDialogs() {
-  const queryClient = useQueryClient();
+//
+const TargetContext = createContext({
+  data: _actionDialogs,
+  setData: (_newDialogs: ActionDialog[]) => {},
+});
 
-  const { data } = useQuery(QUERY_KEY_ACTION_DIALOGS, () => _actionDialogs, {
-    notifyOnChangeProps: ["data", "error"],
-  });
+export default function WrappedContext(props: {
+  children: JSX.Element;
+}): JSX.Element | null {
+  // State to hold the theme value
+  const [data, setData] = useState(_actionDialogs);
+  // Provide the theme value and toggle function to the children components
+  return (
+    <TargetContext.Provider value={{ data, setData }}>
+      {props.children}
+      <ActionDialogs />
+    </TargetContext.Provider>
+  );
+}
+
+export function useActionDialogs() {
+  const { data, setData } = useContext(TargetContext)!;
 
   const prompt = (props: PromptInput): Promise<string | undefined> => {
     return new Promise((resolve, reject) => {
+      const { message, value, isLongPrompt } = props;
+
       const newActionDialog: ActionDialog = {
         ...props,
         type: "prompt",
@@ -149,7 +167,7 @@ export function useActionDialogs() {
   };
 
   function _invalidateQueries() {
-    queryClient.invalidateQueries(QUERY_KEY_ACTION_DIALOGS);
+    setData(_actionDialogs);
   }
 
   return {
