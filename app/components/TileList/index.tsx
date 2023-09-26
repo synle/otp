@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import TileItem from "~/components/TileItem";
+import Loading from "~/components/Loading";
 
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
@@ -55,7 +56,7 @@ export default function () {
   const timer = useRef<ReturnType<typeof setTimeout>>(0);
 
   if (isLoading) {
-    return <>Loading</>;
+    return <Loading />;
   } else if (!data) {
     return <>No response from server</>;
   }
