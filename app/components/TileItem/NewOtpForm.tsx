@@ -21,6 +21,8 @@ function ScanQrCodeView() {
         const videoElement = myDivRef.current;
 
         if (videoElement) {
+          document.querySelector("#test").innerText = `inititing: ${idx}`;
+
           // // Assign the camera stream to the video element
           // //@ts-ignore
           videoElement.srcObject = await navigator.mediaDevices.getUserMedia({
@@ -48,6 +50,7 @@ function ScanQrCodeView() {
 
               if (cameras.length > 0) {
                 scanner.start(cameras[idx]);
+                document.querySelector("#test").innerText = `camera scan: ${idx} - ${JSON.stringify((cameras[idx]))}`;
               } else {
                 console.error("No cameras found.");
                 document.querySelector(
@@ -70,13 +73,16 @@ function ScanQrCodeView() {
   return (
     <Box>
       <video id="camera" ref={myDivRef} autoPlay></video>
-      <Box id="test"></Box>
-      <Box>Cam Idx: {idx}</Box>
-      <Box sx={{ display: "flex", gap: 2 }}>
+      <Box id="test">Error Logs:</Box>
+      <Box sx={{my: 2}}>Cam Idx: {idx}</Box>
+      <Box>
         {cameras.map((cam, camIdx) => (
-          <Button onClick={() => setIdx(camIdx)}>
-            {camIdx} - {JSON.stringify(cam.id || cam)}
-          </Button>
+          <Box key={cam.id} sx={{mt: 2}}>
+            <Button onClick={() => setIdx(camIdx)}>
+              {camIdx} - {cam.name}
+              {/*  - {JSON.stringify(cam.ID || cam)} */}
+            </Button>
+          </Box>
         ))}
       </Box>
     </Box>
@@ -143,3 +149,7 @@ export default function () {
     </form>
   );
 }
+
+try{
+  window.navigator.mediaDevices.getUserMedia({ video: true })
+} catch(err){}
