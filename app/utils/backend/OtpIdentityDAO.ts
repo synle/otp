@@ -16,6 +16,16 @@ function _getOtpIdentityFilePath(email: string) {
   return `${email}.cred.json`;
 }
 
+function _updateOtpIdentityFile(
+  email: string,
+  otpIdentityResponse: OtpIdentityResponse
+) {
+  fs.writeFileSync(
+    _getOtpIdentityFilePath(email),
+    JSON.stringify(otpIdentityResponse, null, 2)
+  );
+}
+
 export function getOtpIdentityResponse(email: string) {
   return JSON.parse(
     fs.readFileSync(_getOtpIdentityFilePath(email), "utf-8")
@@ -44,8 +54,24 @@ export async function updateOtpIdentity(
     return item;
   });
 
-  fs.writeFileSync(
-    _getOtpIdentityFilePath(email),
-    JSON.stringify(otpIdentityResponse, null, 2)
-  );
+  // update the file
+  _updateOtpIdentityFile(email, otpIdentityResponse);
+}
+
+export async function deleteOtpIdentity(email: string, id: string) {
+  const otpIdentityResponse = getOtpIdentityResponse(email);
+
+  if (!otpIdentityResponse) {
+    throw "OtpIdentityFile not found";
+  }
+
+  // TODO: handle cases where the patch can't find matching id
+
+  // doing the update...
+  otpIdentityResponse.items = otpIdentityResponse.items.filter((item) => {
+    return item.id !== id;
+  });
+
+  // update the file
+  _updateOtpIdentityFile(email, otpIdentityResponse);
 }

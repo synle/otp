@@ -1,11 +1,23 @@
 import { useState, useEffect } from "react";
 import { useOtpIdentityById } from "~/utils/frontend/hooks/OtpIdentity";
-import { Box, Paper, Typography, Link, Button, TextField } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Typography,
+  Link,
+  Button,
+  TextField,
+  IconButton,
+} from "@mui/material";
 import { toast } from "react-toastify";
 import * as qrcode from "qrcode";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { OtpIdentity } from "~/utils/backend/OtpIdentityDAO";
-import { useUpdateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
+import {
+  useUpdateOtpIdentity,
+  useDeleteOtpIdentity,
+} from "~/utils/frontend/hooks/OtpIdentity";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 type TileItemProps = {
   showQrCode: boolean;
@@ -48,7 +60,7 @@ export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
         } catch (err) {}
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
         <TextField
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -94,8 +106,10 @@ export function EditOtpForm(props: { item: OtpIdentity; qrCode: string }) {
 export default function (props: TileItemProps) {
   const { item, showQrCode } = props;
   const { data, isLoading } = useOtpIdentityById(item.id);
+  const { mutateAsync: deleteItem, isLoading: isDeleting } =
+    useDeleteOtpIdentity(item.id);
   const [qrCode, setQrCode] = useState("");
-  const { modal } = useActionDialogs();
+  const { modal, confirm } = useActionDialogs();
 
   useEffect(() => {
     async function _load() {
@@ -111,6 +125,14 @@ export default function (props: TileItemProps) {
       title: `Edit`,
       message: <EditOtpForm item={item} qrCode={qrCode} />,
     });
+  };
+
+  const onDelete = async () => {
+    try {
+      await confirm(`Do you want to delete this OTP item?`);
+      await deleteItem();
+    } finally {
+    }
   };
 
   return (
@@ -140,16 +162,25 @@ export default function (props: TileItemProps) {
       {showQrCode ? (
         <img src={qrCode} style={{ marginLeft: "-1rem" }} />
       ) : (
-        <Typography variant="h4">
-          <Link
-            component={Button}
-            onClick={isLoading ? () => {} : () => onCopyToClipboard(data)}
-            underline="none"
-            sx={{ cursor: "pointer" }}
+        <Box sx={{ display: "flex", gap: 3 }}>
+          <Typography variant="h4">
+            <Link
+              component={Button}
+              onClick={isLoading ? () => {} : () => onCopyToClipboard(data)}
+              underline="none"
+              sx={{ cursor: "pointer" }}
+            >
+              {data || "......"}
+            </Link>
+          </Typography>
+          <IconButton
+            aria-label="Delete"
+            disabled={isDeleting}
+            onClick={onDelete}
           >
-            {data || "......"}
-          </Link>
-        </Typography>
+            <DeleteIcon />
+          </IconButton>
+        </Box>
       )}
     </Paper>
   );
