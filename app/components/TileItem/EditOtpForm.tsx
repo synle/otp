@@ -11,7 +11,9 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
   const { item, qrCode } = props;
   const { dismiss } = useActionDialogs();
   const [name, setName] = useState(item.name);
-  const { mutateAsync, isLoading: isSaving } = useUpdateOtpIdentity(item.id);
+  const { mutateAsync: updateOtp, isLoading: isSaving } = useUpdateOtpIdentity(
+    item.id
+  );
   const { data, isLoading } = useOtpIdentityById(item.id);
 
   return (
@@ -19,7 +21,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
       onSubmit={async (e) => {
         e.preventDefault();
         try {
-          await mutateAsync({ name });
+          await updateOtp({ name });
           dismiss();
         } catch (err) {}
       }}

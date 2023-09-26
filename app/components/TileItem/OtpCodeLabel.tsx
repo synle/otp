@@ -43,7 +43,7 @@ export default function (props: { data?: string; isLoading?: boolean }) {
         {isLoading ? (
           <Skeleton animation="wave" height={42} width={120} />
         ) : (
-          data
+          data || "Invalid"
         )}
       </Link>
     </Typography>
