@@ -193,7 +193,6 @@ export default function () {
         <Meta />
         <Links />
         <script src="https://cdn.rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
-
       </head>
       <body>
         <CssBaseline />
