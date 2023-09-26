@@ -6,6 +6,7 @@ import { getOtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
 import {
   deleteOtpIdentity,
   updateOtpIdentity,
+  createOtpIdentity,
 } from "~/utils/backend/OtpIdentityDAO";
 
 export async function loader(args: LoaderArgs) {
@@ -63,8 +64,18 @@ export async function action(args: ActionArgs) {
   switch (args.request.method?.toUpperCase()) {
     case "PUT":
       // update link
-      const body: { name: string } = await args.request.json();
-      await updateOtpIdentity(email, id, body);
+      const updateRequest: Parameters<typeof updateOtpIdentity>[2] =
+        await args.request.json();
+      await updateOtpIdentity(email, id, updateRequest);
+
+      return new Response("OK", {
+        status: 200,
+      });
+    case "POST":
+      // create link
+      const createRequest: Parameters<typeof createOtpIdentity>[1] =
+        await args.request.json();
+      await createOtpIdentity(email, createRequest);
 
       return new Response("OK", {
         status: 200,

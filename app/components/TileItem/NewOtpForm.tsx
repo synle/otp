@@ -3,25 +3,28 @@ import { useOtpIdentityById } from "~/utils/frontend/hooks/OtpIdentity";
 import { Box, Typography, Button, TextField } from "@mui/material";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { OtpIdentity } from "~/utils/backend/OtpIdentityDAO";
-import { useUpdateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
+import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
-export default function (props: { item: OtpIdentity; qrCode: string }) {
-  const { item, qrCode } = props;
+export default function () {
   const { dismiss } = useActionDialogs();
-  const [name, setName] = useState(item.name);
-  const { mutateAsync: updateOtp, isLoading: isSaving } = useUpdateOtpIdentity(
-    item.id
-  );
-  const { data, isLoading } = useOtpIdentityById(item.id);
+  const [name, setName] = useState("");
+  const [totp, setTotp] = useState("");
+  const { mutateAsync: createOtp, isLoading: isSaving } =
+    useCreateOtpIdentity();
 
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
         try {
-          await updateOtp({ name });
+          await createOtp({
+            name,
+            login: {
+              totp,
+            },
+          });
           dismiss();
         } catch (err) {}
       }}
@@ -34,19 +37,12 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
           autoFocus
           required
         />
-        <TextField defaultValue={item.login.totp} label="TOTP" disabled />
-        <Box>
-          <Typography sx={{ color: "text.disabled", fontWeight: "bold" }}>
-            QR Code
-          </Typography>
-          <img src={qrCode} style={{ marginLeft: "-1rem", width: "150px" }} />
-        </Box>
-        <Box>
-          <Typography sx={{ color: "text.disabled", fontWeight: "bold" }}>
-            Code
-          </Typography>
-          <OtpCodeLabel data={data} isLoading={isLoading} />
-        </Box>
+        <TextField
+          value={totp}
+          onChange={(e) => setTotp(e.target.value)}
+          label="TOTP"
+          required
+        />
         <Box sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
           <Button type="submit" variant="contained" disabled={isSaving}>
             Save

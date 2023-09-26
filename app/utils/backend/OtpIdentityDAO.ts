@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 
 export type OtpIdentity = {
   id: string;
@@ -30,6 +31,30 @@ export function getOtpIdentityResponse(email: string) {
   return JSON.parse(
     fs.readFileSync(_getOtpIdentityFilePath(email), "utf-8")
   ) as OtpIdentityResponse;
+}
+
+export async function createOtpIdentity(
+  email: string,
+  body: Partial<OtpIdentity> & {
+    name: string;
+    login: {
+      totp: string;
+    };
+  }
+) {
+  const otpIdentityResponse = getOtpIdentityResponse(email);
+
+  if (!otpIdentityResponse) {
+    throw "OtpIdentityFile not found";
+  }
+
+  otpIdentityResponse.items.push({
+    id: uuidv4(),
+    ...body,
+  });
+
+  // update the file
+  _updateOtpIdentityFile(email, otpIdentityResponse);
 }
 
 export async function updateOtpIdentity(

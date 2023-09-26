@@ -34,7 +34,7 @@ export default function (props: TileItemProps) {
     modal({
       showCloseButton: true,
       size: "md",
-      title: `Edit`,
+      title: `Edit OTP`,
       message: <EditOtpForm item={item} qrCode={qrCode} />,
     });
   };

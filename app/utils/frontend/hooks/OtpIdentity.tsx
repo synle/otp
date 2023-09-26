@@ -2,6 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import axios from "axios";
 import type { SessionData } from "~/utils/backend/Session";
 import { OtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
+import {
+  updateOtpIdentity,
+  createOtpIdentity,
+} from "~/utils/backend/OtpIdentityDAO";
 
 export function useMeProfile() {
   return useQuery(
@@ -35,11 +39,25 @@ export function useOtpIdentityById(id: string) {
   );
 }
 
+export function useCreateOtpIdentity() {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    (body: Parameters<typeof createOtpIdentity>[1]) =>
+      axios.post(`/api/otp/new`, body).then((r) => r.data as string),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("otp_list");
+      },
+    }
+  );
+}
+
 export function useUpdateOtpIdentity(id: string) {
   const queryClient = useQueryClient();
 
   return useMutation(
-    (body: { name: string }) =>
+    (body: Parameters<typeof updateOtpIdentity>[2]) =>
       axios.put(`/api/otp/${id}`, body).then((r) => r.data as string),
     {
       onSuccess: () => {
