@@ -2,7 +2,7 @@ import AlertDialog from "~/components/ActionDialogs/AlertDialog";
 import ChoiceDialog from "~/components/ActionDialogs/ChoiceDialog";
 import ModalDialog from "~/components/ActionDialogs/ModalDialog";
 import PromptDialog from "~/components/ActionDialogs/PromptDialog";
-import { useActionDialogs } from "~/utils/frontend/hooks/useActionDialogs";
+import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 
 type ActionDialogsProps = {};
 

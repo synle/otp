@@ -25,7 +25,7 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { useMeProfile } from "~/utils/frontend/Hooks";
+import { useMeProfile } from "~/utils/frontend/hooks/OtpIdentity";
 import Loading from "~/components/Loading";
 import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";

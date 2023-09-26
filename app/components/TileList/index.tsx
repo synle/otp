@@ -1,5 +1,5 @@
-import { useState, useRef,useMemo } from "react";
-import { useOtpIdentityList } from "~/utils/frontend/Hooks";
+import { useState, useRef, useMemo } from "react";
+import { useOtpIdentityList } from "~/utils/frontend/hooks/OtpIdentity";
 import {
   Box,
   TextField,
@@ -67,8 +67,8 @@ export default function () {
             <InputAdornment position="start">
               <SearchIcon />
               <datalist id="otpItemNames">
-                {items.map((item) => {
-                  return <option value={item.name} />;
+                {items?.map((item) => {
+                  return <option key={item.name} value={item.name} />;
                 })}
               </datalist>
             </InputAdornment>
@@ -114,7 +114,7 @@ export default function () {
         }}
       >
         <Box className="TileList">
-          {items.map((item) => {
+          {items?.map((item) => {
             return (
               <TileItem
                 key={item.id}

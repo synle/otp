@@ -1,4 +1,4 @@
-import { useMeProfile } from "~/utils/frontend/Hooks";
+import { useMeProfile } from "~/utils/frontend/hooks/OtpIdentity";
 import DataTable, { ColumnFilter } from "~/components/DataTable";
 import TileList from "~/components/TileList";
 import { Box, Typography } from "@mui/material";
