@@ -6,6 +6,10 @@ import {
   InputAdornment,
   Checkbox,
   FormControlLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import TileItem from "~/components/TileItem";
@@ -13,16 +17,39 @@ import TileItem from "~/components/TileItem";
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
   const [q, setQ] = useState("");
+  const [sortingOption, setSortingOption] = useState("oldest-first");
   const [showQrCode, setShowQrCode] = useState(false);
 
   const items = useMemo(() => {
+    let itemsToReturn = data?.items;
+
     if (q) {
-      return data?.items.filter((item) =>
+      itemsToReturn = data?.items.filter((item) =>
         item.name.toLowerCase()?.includes(q.toLowerCase())
       );
     }
-    return data?.items;
-  }, [q, data]);
+
+    itemsToReturn = [...(itemsToReturn || [])];
+
+    switch (sortingOption) {
+      case "name-desc":
+        return itemsToReturn.sort((a, b) => {
+          const na = a.name;
+          const nb = b.name;
+          return nb.localeCompare(na);
+        });
+      case "name-asc":
+        return itemsToReturn.sort((a, b) => {
+          const na = a.name;
+          const nb = b.name;
+          return na.localeCompare(nb);
+        });
+      case "recent-first":
+        return itemsToReturn.reverse();
+      case "oldest-first":
+        return itemsToReturn;
+    }
+  }, [q, data, sortingOption]);
 
   //@ts-ignore
   const timer = useRef<ReturnType<typeof setTimeout>>(0);
@@ -75,7 +102,14 @@ export default function () {
           ),
         }}
       />
-      <Box>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <FormControlLabel
           control={
             <Checkbox
@@ -86,6 +120,21 @@ export default function () {
           }
           label="Show / Hide QR Code"
         />
+        <FormControl variant="outlined" sx={{ minWidth: "200px" }}>
+          <InputLabel id="sorting-label">Sort By</InputLabel>
+          <Select
+            labelId="sorting-label"
+            id="sorting-select"
+            value={sortingOption}
+            onChange={(e) => setSortingOption(e.target.value)}
+            label="Sort By"
+          >
+            <MenuItem value="name-asc">By name ascending</MenuItem>
+            <MenuItem value="name-desc">By name descending</MenuItem>
+            <MenuItem value="recent-first">By most recent first</MenuItem>
+            <MenuItem value="oldest-first">By least recent first</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
       <Box
         sx={{
