@@ -2,8 +2,8 @@ import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import { Box } from "@mui/material";
 
 export type AlertInput = {
   title?: string;
@@ -29,14 +29,14 @@ export default function AlertDialog(
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
-      <div style={{ width: 400 }}>
+      <div style={{ maxWidth: 400 }}>
         <DialogTitle id="alert-dialog-title">
           {props.title || "Alert"}
         </DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
+          <Box sx={{ pt: 1 }} id="alert-dialog-description">
             {props.message}
-          </DialogContentText>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
           {props.isConfirm ? (

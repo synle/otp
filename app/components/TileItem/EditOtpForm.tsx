@@ -26,7 +26,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
         } catch (err) {}
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <TextField
           value={name}
           onChange={(e) => setName(e.target.value)}

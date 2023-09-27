@@ -46,7 +46,7 @@ export default function ChoiceDialog(
   return (
     <Dialog onClose={onClose} open={open} fullWidth={true}>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ mt: 1 }}>
         {message}
         <List dense>
           {options.map((option) => (

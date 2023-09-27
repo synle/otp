@@ -110,8 +110,6 @@ function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <video ref={myDivRef} autoPlay></video>
-      <Box>{message}</Box>
       {cameras.length === 0 ? null : (
         <FormControl
           variant="outlined"
@@ -133,6 +131,8 @@ function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
           </Select>
         </FormControl>
       )}
+      <Box>{message}</Box>
+      <video ref={myDivRef} autoPlay></video>
     </Box>
   );
 }
@@ -160,7 +160,7 @@ export default function () {
         } catch (err) {}
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <TextField
           value={name}
           onChange={(e) => setName(e.target.value)}
