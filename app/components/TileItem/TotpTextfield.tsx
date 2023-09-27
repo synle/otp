@@ -4,7 +4,13 @@ export default function (props: any) {
   const { onChange, value } = props;
   return (
     <Box>
-      <TextField value={value} onChange={onChange} label="TOTP" required />
+      <TextField
+        value={value}
+        onChange={onChange}
+        label="TOTP"
+        required
+        fullWidth
+      />
     </Box>
   );
 }

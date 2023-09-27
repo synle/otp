@@ -4,7 +4,7 @@ import { Box, Typography, Button, TextField } from "@mui/material";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { OtpIdentity } from "~/utils/backend/OtpIdentityDAO";
 import { useUpdateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
-import { TotpTextfield } from "~/components/TileItem/TotpTextfield";
+import TotpTextfield from "~/components/TileItem/TotpTextfield";
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
 export default function (props: { item: OtpIdentity; qrCode: string }) {

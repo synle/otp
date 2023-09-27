@@ -18,7 +18,7 @@ import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 import { toast } from "react-toastify";
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
-import { TotpTextfield } from "~/components/TileItem/TotpTextfield";
+import TotpTextfield from "~/components/TileItem/TotpTextfield";
 
 function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
   const myDivRef = useRef(null);
