@@ -17,8 +17,8 @@ import {
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 import { toast } from "react-toastify";
-
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
+import { TotpTextfield } from "~/components/TileItem/TotpTextfield";
 
 function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
   const myDivRef = useRef(null);
@@ -168,12 +168,7 @@ export default function () {
           autoFocus
           required
         />
-        <TextField
-          value={totp}
-          onChange={(e) => setTotp(e.target.value)}
-          label="TOTP"
-          required
-        />
+        <TotpTextfield value={totp} onChange={(e) => setTotp(e.target.value)} />
         <Box>
           <Button
             onClick={() => {

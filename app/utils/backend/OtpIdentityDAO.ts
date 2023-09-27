@@ -66,7 +66,12 @@ export async function createOtpIdentity(
 export async function updateOtpIdentity(
   email: string,
   id: string,
-  body: Partial<OtpIdentity> & { name: string }
+  body: Partial<OtpIdentity> & {
+    name: string;
+    login: {
+      totp: string;
+    };
+  }
 ) {
   const otpIdentityResponse = getOtpIdentityResponse(email);
 

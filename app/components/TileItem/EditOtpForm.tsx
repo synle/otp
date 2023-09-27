@@ -4,13 +4,14 @@ import { Box, Typography, Button, TextField } from "@mui/material";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { OtpIdentity } from "~/utils/backend/OtpIdentityDAO";
 import { useUpdateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
-
+import { TotpTextfield } from "~/components/TileItem/TotpTextfield";
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
 export default function (props: { item: OtpIdentity; qrCode: string }) {
   const { item, qrCode } = props;
   const { dismiss } = useActionDialogs();
   const [name, setName] = useState(item.name);
+  const [totp, setTotp] = useState(item.login.totp);
   const { mutateAsync: updateOtp, isLoading: isSaving } = useUpdateOtpIdentity(
     item.id
   );
@@ -21,7 +22,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
       onSubmit={async (e) => {
         e.preventDefault();
         try {
-          await updateOtp({ name });
+          await updateOtp({ name, login: { totp } });
           dismiss();
         } catch (err) {}
       }}
@@ -34,7 +35,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
           autoFocus
           required
         />
-        <TextField defaultValue={item.login.totp} label="TOTP" disabled />
+        <TotpTextfield value={totp} onChange={(e) => setTotp(e.target.value)} />
         <Box>
           <Typography sx={{ color: "text.disabled", fontWeight: "bold" }}>
             QR Code
