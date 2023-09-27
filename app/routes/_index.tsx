@@ -16,7 +16,6 @@ export default function Index() {
 
   return (
     <Box sx={{ display: "flex", gap: 2, flexDirection: "column" }}>
-      <Typography>Hello {profile.fullName}.</Typography>
       <TileList />
     </Box>
   );
