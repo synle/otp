@@ -19,6 +19,25 @@ import Loading from "~/components/Loading";
 import NewOtpForm from "~/components/TileItem/NewOtpForm";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 
+export function NewOtpButton() {
+  const { modal } = useActionDialogs();
+
+  const onCreateNewOtp = () => {
+    modal({
+      showCloseButton: true,
+      size: "md",
+      title: `New OTP`,
+      message: <NewOtpForm />,
+    });
+  };
+
+  return (
+    <Button onClick={onCreateNewOtp} variant="contained">
+      New OTP
+    </Button>
+  );
+}
+
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
   const [q, setQ] = useState("");
@@ -60,15 +79,6 @@ export default function () {
   //@ts-ignore
   const timer = useRef<ReturnType<typeof setTimeout>>(0);
 
-  const onCreateNewOtp = () => {
-    modal({
-      showCloseButton: true,
-      size: "md",
-      title: `New OTP`,
-      message: <NewOtpForm />,
-    });
-  };
-
   if (isLoading) {
     return <Loading />;
   } else if (!data) {
@@ -91,6 +101,7 @@ export default function () {
             gap: 2,
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
           }}
         >
           <FormControlLabel
@@ -102,8 +113,12 @@ export default function () {
               />
             }
             label="Show / Hide QR Code"
+            sx={{ flexShrink: 0 }}
           />
-          <FormControl variant="outlined" sx={{ minWidth: "200px" }}>
+          <FormControl
+            variant="outlined"
+            sx={{ minWidth: "200px", flexShrink: 0 }}
+          >
             <InputLabel id="sorting-label">Sort By</InputLabel>
             <Select
               labelId="sorting-label"
@@ -200,9 +215,6 @@ export default function () {
         }}
       />
       {contentDom}
-      <Box>
-        <Button onClick={onCreateNewOtp}>New OTP</Button>
-      </Box>
     </>
   );
 }

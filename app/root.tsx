@@ -33,6 +33,7 @@ import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import ActionDialogsContext from "~/utils/frontend/hooks/ActionDialogs";
+import { NewOtpButton } from "./components/TileList";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -141,6 +142,7 @@ function App() {
                 OTP
               </Typography>
             </Link>
+            <NewOtpButton />
             <Box>
               <IconButton
                 aria-label="profile"

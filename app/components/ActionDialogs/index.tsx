@@ -52,6 +52,7 @@ export default function ActionDialogs(
                 isConfirm={false}
               />
             );
+            break;
           case "confirm":
             contentDom = (
               <AlertDialog
@@ -64,6 +65,7 @@ export default function ActionDialogs(
                 isConfirm={true}
               />
             );
+            break;
           case "prompt":
             contentDom = (
               <PromptDialog
@@ -80,6 +82,7 @@ export default function ActionDialogs(
                 readonly={dialog.readonly}
               />
             );
+            break;
           case "choice":
             contentDom = (
               <ChoiceDialog
@@ -92,6 +95,7 @@ export default function ActionDialogs(
                 required={dialog.required}
               />
             );
+            break;
           case "modal":
             contentDom = (
               <ModalDialog
@@ -104,6 +108,7 @@ export default function ActionDialogs(
                 size={dialog.size}
               />
             );
+            break;
         }
 
         return <React.Fragment key={idx}>{contentDom}</React.Fragment>;
