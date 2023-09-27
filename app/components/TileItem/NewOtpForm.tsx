@@ -132,7 +132,7 @@ export default function () {
                 title: `New OTP`,
                 message: <ScanQrCodeView onScan={(newTotp: string) => {
                   setTotp(newTotp);
-                  alert(newTotp)
+                  setName(new URL(newTotp).pathname.replace('//totp/', ''))
                   dismiss();
                 }} />,
               });
@@ -148,7 +148,7 @@ export default function () {
           <Button onClick={() => dismiss()} disabled={isSaving}>
             Cancel
           </Button>
-        B</Box>
+        </Box>
       </Box>
     </form>
   );
