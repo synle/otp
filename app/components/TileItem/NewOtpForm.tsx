@@ -9,72 +9,69 @@ import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
-function ScanQrCodeView() {
+function ScanQrCodeView(props: {
+  onScan: (newTotp: string) => void
+}) {
   const myDivRef = useRef(null);
+  const {onScan} = props;
   const [cameras, setCameras] = useState([]);
   const [idx, setIdx] = useState(0);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
+    let scanner;
     async function _load() {
       try {
         // //@ts-ignore
         const videoElement = myDivRef.current;
+        setMessage('');
 
         if (videoElement) {
-          document.querySelector("#test").innerText = `inititing: ${idx}`;
-
-          // // Assign the camera stream to the video element
-          // //@ts-ignore
-          videoElement.srcObject = await navigator.mediaDevices.getUserMedia({
-            video: true,
-          });
-
-          // const videoElement = document.getElementById('camera');
-          // const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
-          // // Assign the camera stream to the video element
-          // videoElement.srcObject = stream;
-
           // scanner
-          let scanner = new Instascan.Scanner({ video: videoElement });
+          if (cameras && cameras.length > 0){
+            scanner = new Instascan.Scanner({ video: videoElement, mirror: false });
 
-          scanner.addListener("scan", function (content) {
-            console.log(">> code scan", content);
-            document.querySelector(
-              "#test"
-            ).innerText = `scan content: ${content}`;
-          });
-          Instascan.Camera.getCameras()
-            .then(function (cameras) {
-              setCameras(cameras);
+            scanner.addListener("scan", (content) => {
+              const newTotp = content;
 
-              if (cameras.length > 0) {
-                scanner.start(cameras[idx]);
-                document.querySelector("#test").innerText = `camera scan: ${idx} - ${JSON.stringify((cameras[idx]))}`;
-              } else {
-                console.error("No cameras found.");
-                document.querySelector(
-                  "#test"
-                ).innerText = `no camera found: ${content}`;
+              if (newTotp.indexOf(`otpauth://totp/`) === 0){
+                // trigger onScan if the content matches TOTP
+                onScan(newTotp);
               }
-            })
-            .catch(function (e) {
-              console.error(e);
-              document.querySelector("#test").innerText = `scan error: ${e}`;
             });
+            scanner.start(cameras[idx]);
+          } else {
+            setMessage(`System doesn't have any camera`);
+          }
         }
       } catch (e1) {
-        document.querySelector("#test").innerText = `init error: ${e1}`;
+        setMessage(`Scanner init errors: ${e1}`);
       }
     }
     _load();
-  }, [myDivRef, idx]);
+
+    return () => {
+      if (scanner){
+        scanner.stop();
+      }
+    }
+  }, [myDivRef, idx, cameras]);
+
+  useEffect(() => {
+    // initiate camera
+    Instascan.Camera.getCameras()
+      .then(function (cameras) {
+        setCameras(cameras);
+      })
+      .catch(function (e1) {
+        setMessage(`Failed to get cameras: ${e1}`);
+      });
+  }, [])
 
   return (
     <Box>
-      <video id="camera" ref={myDivRef} autoPlay></video>
-      <Box id="test">Error Logs:</Box>
-      <Box sx={{my: 2}}>Cam Idx: {idx}</Box>
+      <video ref={myDivRef} autoPlay></video>
+      <Box>{message}</Box>
       <Box>
         {cameras.map((cam, camIdx) => (
           <Box key={cam.id} sx={{mt: 2}}>
@@ -125,18 +122,25 @@ export default function () {
           label="TOTP"
           required
         />
-        <Button
-          onClick={() => {
-            modal({
-              showCloseButton: true,
-              size: "md",
-              title: `New OTP`,
-              message: <ScanQrCodeView />,
-            });
-          }}
-        >
-          Scan QR Code
-        </Button>
+        <Box>{totp}</Box>
+        <Box>
+          <Button
+            onClick={() => {
+              modal({
+                showCloseButton: true,
+                size: "md",
+                title: `New OTP`,
+                message: <ScanQrCodeView onScan={(newTotp: string) => {
+                  setTotp(newTotp);
+                  alert(newTotp)
+                  dismiss();
+                }} />,
+              });
+            }}
+          >
+            Scan QR Code
+          </Button>
+        </Box>
         <Box sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
           <Button type="submit" variant="contained" disabled={isSaving}>
             Save
@@ -144,12 +148,8 @@ export default function () {
           <Button onClick={() => dismiss()} disabled={isSaving}>
             Cancel
           </Button>
-        </Box>
+        B</Box>
       </Box>
     </form>
   );
 }
-
-try{
-  window.navigator.mediaDevices.getUserMedia({ video: true })
-} catch(err){}
