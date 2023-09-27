@@ -2,7 +2,18 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
-import { Box, Typography, Button, TextField } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  FormControlLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
+  badgeClasses,
+} from "@mui/material";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 import { toast } from "react-toastify";
@@ -15,6 +26,41 @@ function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
   const [cameras, setCameras] = useState([]);
   const [idx, setIdx] = useState(0);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // initiate camera list
+    Instascan.Camera.getCameras()
+      .then(function (cameras) {
+        setCameras(
+          // here we sort rear facing camera first
+          cameras.sort((a, b) => {
+            let aName = a.name?.toLowerCase();
+            let bName = b.name?.toLowerCase();
+
+            if (aName.includes("back") || aName.includes("rear")) {
+              aName = `0-${aName}`;
+            } else {
+              aName = `1-${aName}`;
+            }
+
+            if (bName.includes("back") || bName.includes("rear")) {
+              bName = `0-${bName}`;
+            } else {
+              bName = `1-${bName}`;
+            }
+
+            return aName.localeCompare(bName);
+          })
+        );
+      })
+      .catch(function (e1) {
+        setMessage(`Failed to get cameras: ${e1}`);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     let scanner;
@@ -58,31 +104,35 @@ function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
     };
   }, [myDivRef, idx, cameras]);
 
-  useEffect(() => {
-    // initiate camera
-    Instascan.Camera.getCameras()
-      .then(function (cameras) {
-        setCameras(cameras);
-      })
-      .catch(function (e1) {
-        setMessage(`Failed to get cameras: ${e1}`);
-      });
-  }, []);
+  if (loading) {
+    return <>Loading...</>;
+  }
 
   return (
-    <Box>
-      <video ref={myDivRef} autoPlay></video>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {cameras.length === 0 ? null : (
+        <FormControl
+          variant="outlined"
+          sx={{ minWidth: "200px", flexShrink: 0 }}
+        >
+          <InputLabel id="camera-label">Which camera?</InputLabel>
+          <Select
+            labelId="camera-label"
+            id="camera-select"
+            value={idx}
+            onChange={(e) => setIdx(e.target.value)}
+            label="Which camera?"
+          >
+            {cameras.map((cam, camIdx) => (
+              <MenuItem key={cam.id} value={camIdx}>
+                {camIdx} - {cam.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
       <Box>{message}</Box>
-      <Box>
-        {cameras.map((cam, camIdx) => (
-          <Box key={cam.id} sx={{ mt: 2 }}>
-            <Button onClick={() => setIdx(camIdx)}>
-              {camIdx} - {cam.name}
-              {/*  - {JSON.stringify(cam.ID || cam)} */}
-            </Button>
-          </Box>
-        ))}
-      </Box>
+      <video ref={myDivRef} autoPlay></video>
     </Box>
   );
 }
@@ -110,7 +160,7 @@ export default function () {
         } catch (err) {}
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <TextField
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -130,7 +180,7 @@ export default function () {
               modal({
                 showCloseButton: true,
                 size: "md",
-                title: `New OTP`,
+                title: `QR Code Scanner`,
                 message: (
                   <ScanQrCodeView
                     onScan={(newTotp: string) => {

@@ -3,6 +3,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
+import { Box } from "@mui/material";
 
 export type ModalInput = {
   title: string;
@@ -53,7 +54,9 @@ export default function Modal(props: ModalProps): JSX.Element | null {
           </IconButton>
         )}
       </DialogTitle>
-      <DialogContent>{props.message}</DialogContent>
+      <DialogContent>
+        <Box sx={{ pt: 1 }}>{props.message}</Box>
+      </DialogContent>
     </Dialog>
   );
 }

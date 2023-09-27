@@ -24,6 +24,7 @@ import {
   MenuItem,
   Divider,
   useMediaQuery,
+  Chip,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -128,20 +129,19 @@ function App() {
       </Box>
     );
   } else {
-    const linkStyles = {
-      color: "text.disabled",
-      fontWeight: "bold",
-    };
-
     contentDom = (
       <>
         <AppBar position="static">
           <Toolbar sx={{ display: "flex", gap: 2 }}>
-            <Link href="/" sx={{ marginRight: "auto" }} underline="hover">
-              <Typography variant="h5" sx={linkStyles}>
-                OTP
-              </Typography>
-            </Link>
+            <Chip
+              label="OTP"
+              sx={{
+                marginRight: "auto",
+                fontWeight: "bold",
+                fontSize: "h6.fontSize",
+              }}
+              color="primary"
+            />
             <NewOtpButton />
             <Box>
               <IconButton
@@ -158,7 +158,8 @@ function App() {
                 open={Boolean(anchorEl)}
                 onClose={() => setAnchorEl(null)}
               >
-                <MenuItem>{meProfile.fullName}</MenuItem>
+                <MenuItem disabled>{meProfile.fullName}</MenuItem>
+                <MenuItem disabled>{meProfile.email}</MenuItem>
                 <Divider sx={{ my: 1 }} />
                 <MenuItem component={Link} href="/api/auth/logout">
                   Logout
