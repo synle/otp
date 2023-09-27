@@ -16,6 +16,7 @@ Numerous apps offer the capability to sync and manage your OTPs. However, many o
 - Instascan for QR Code scanner.
 - otplib for OTP code generation.
 - Data is currently persisted using file. Encryption will come at a later dates.
+- Azure AD for OAuth / authentication.
 
 ## Features
 
