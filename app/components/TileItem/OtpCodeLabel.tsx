@@ -23,13 +23,11 @@ export default function (props: { data?: string; isLoading?: boolean }) {
     });
   };
 
-  return (
-    <Typography
-      variant="h4"
-      sx={{
-        fontFamily: "monospace",
-      }}
-    >
+  let contentDom = <></>;
+  if (isLoading) {
+    contentDom = <Skeleton animation="wave" height={42} width={120} />;
+  } else if (data) {
+    contentDom = (
       <Link
         component={Button}
         onClick={() => {
@@ -40,12 +38,21 @@ export default function (props: { data?: string; isLoading?: boolean }) {
         underline="none"
         sx={{ cursor: "pointer" }}
       >
-        {isLoading ? (
-          <Skeleton animation="wave" height={42} width={120} />
-        ) : (
-          data || "Invalid"
-        )}
+        {data}
       </Link>
+    );
+  } else {
+    contentDom = <>Invalid</>;
+  }
+
+  return (
+    <Typography
+      variant="h4"
+      sx={{
+        fontFamily: "monospace",
+      }}
+    >
+      {contentDom}
     </Typography>
   );
 }

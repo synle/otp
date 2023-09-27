@@ -12,6 +12,7 @@ import {
   InputLabel,
   Button,
   Alert,
+  Autocomplete,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import TileItem from "~/components/TileItem";
@@ -78,6 +79,10 @@ export default function () {
 
   //@ts-ignore
   const timer = useRef<ReturnType<typeof setTimeout>>(0);
+
+  const sortedItemNames = useMemo(() => {
+    return (items?.map((item) => item.name) || []).sort();
+  }, [items]);
 
   if (isLoading) {
     return <Loading />;
@@ -180,39 +185,35 @@ export default function () {
 
   return (
     <>
-      <TextField
-        id="otp-item-search-filter"
-        name="otp-item-search-filter"
+      <Autocomplete
         defaultValue={q || ""}
-        onChange={(e) => {
+        onChange={(e, newValue) => {
           clearTimeout(timer.current);
 
           timer.current = setTimeout(async () => {
-            setQ((e.target.value || "").trim());
+            setQ((newValue || "").trim());
           }, 500);
         }}
-        placeholder="Search for item"
-        inputProps={{
-          sx: {
-            fontSize: "caption.fontSize",
-          },
-        }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon />
-              <datalist id="otpItemNames">
-                {items?.map((item) => {
-                  return <option key={item.name} value={item.name} />;
-                })}
-              </datalist>
-            </InputAdornment>
-          ),
-        }}
+        options={sortedItemNames}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Search"
+            variant="outlined"
+            InputProps={{
+              ...params.InputProps,
+              autoComplete: "off",
+              sx: {
+                fontSize: "caption.fontSize",
+              },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        )}
       />
       {contentDom}
     </>
