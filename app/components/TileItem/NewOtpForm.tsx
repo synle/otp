@@ -5,6 +5,7 @@ import { useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
 import { Box, Typography, Button, TextField } from "@mui/material";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
+import { toast } from "react-toastify";
 
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
@@ -133,8 +134,18 @@ export default function () {
                 message: (
                   <ScanQrCodeView
                     onScan={(newTotp: string) => {
+                      const newName = new URL(newTotp).pathname.replace(
+                        "//totp/",
+                        ""
+                      );
                       setTotp(newTotp);
-                      setName(new URL(newTotp).pathname.replace("//totp/", ""));
+                      setName(newName);
+
+                      toast.success(`New OTP code for ${newName} added`, {
+                        position: "top-right",
+                        autoClose: 3000, // Duration in milliseconds
+                      });
+
                       dismiss();
                     }}
                   />

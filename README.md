@@ -4,7 +4,7 @@ A basic web application developed using Remix.js and React. This app offers Azur
 
 ## Screenshots
 
-![image](https://github.com/synle/otp/assets/3792401/fca85dbd-0b6e-4ee1-a24b-cca371065219)
+![image](https://github.com/synle/otp/assets/3792401/9866c83d-6266-4f07-baf1-b4a32a3c0164)
 ![image](https://github.com/synle/otp/assets/3792401/2d37c191-ba2a-4e6a-9e2b-c5db90b77d52)
 ![image](https://github.com/synle/otp/assets/3792401/d2af4f61-3f03-4217-8d5d-1cfd0bf48e69)
 
