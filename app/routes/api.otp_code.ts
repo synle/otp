@@ -9,42 +9,50 @@ import {
   createOtpIdentity,
 } from "~/utils/backend/OtpIdentityDAO";
 
-export async function loader(args: LoaderArgs) {
+export async function action(args: ActionArgs) {
   const { request } = args;
-  try {
-    const session = await getSession(request.headers.get("Cookie"));
-    const email = session.get("email");
 
-    if (!email) {
-      return new Response(`Unauthorized`, {
-        status: 401,
-      });
-    }
+  switch (args.request.method?.toUpperCase()) {
+    case "POST":
+      try {
+        const session = await getSession(request.headers.get("Cookie"));
+        const email = session.get("email");
 
-    const url = new URL(request.url);
-    const totp = (url.searchParams.get("totp") || "").trim();
+        if (!email) {
+          return new Response(`Unauthorized`, {
+            status: 401,
+          });
+        }
 
-    if (!totp) {
-      return new Response(`Missing totp`, {
-        status: 400,
-      });
-    }
+        const totp = (await args.request.json()).tolp;
 
-    if (totp) {
-      const url = new URL(totp);
-      const secret = url.searchParams.get("secret");
+        if (!totp) {
+          return new Response(`Missing totp`, {
+            status: 400,
+          });
+        }
 
-      if (secret) {
-        return authenticator.generate(secret);
-      } else {
-        return new Response(`Found Secret is empty`, {
-          status: 400,
+        if (totp) {
+          const url = new URL(totp);
+          const secret = url.searchParams.get("secret");
+
+          if (secret) {
+            return authenticator.generate(secret);
+          } else {
+            return new Response(`Found Secret is empty`, {
+              status: 400,
+            });
+          }
+        }
+      } catch (error) {
+        return new Response(`Failed to otp_code - ${error}`, {
+          status: 500,
         });
       }
-    }
-  } catch (error) {
-    return new Response(`Failed to otp_code - ${error}`, {
-      status: 500,
-    });
+      break;
+    default:
+      return new Response(`Method not supported`, {
+        status: 400,
+      });
   }
 }

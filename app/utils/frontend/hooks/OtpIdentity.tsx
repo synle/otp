@@ -28,13 +28,14 @@ export function useOtpIdentityList() {
   );
 }
 
-export function useOtpIdentityById(id: string) {
+export function useOtpCode(tolp: string) {
   return useQuery(
-    ["otp_item", id],
-    () => axios.get<string>(`/api/otp/${id}`).then((r) => r.data),
+    ["otp_code", tolp],
+    () => axios.post<string>(`/api/otp_code`, { tolp }).then((r) => r.data),
     {
       retry: false,
       refetchInterval: 5000,
+      enabled: !!tolp,
     }
   );
 }

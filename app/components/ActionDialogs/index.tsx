@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import AlertDialog from "~/components/ActionDialogs/AlertDialog";
 import ChoiceDialog from "~/components/ActionDialogs/ChoiceDialog";
 import ModalDialog from "~/components/ActionDialogs/ModalDialog";
@@ -12,13 +12,13 @@ export default function ActionDialogs(
 ): JSX.Element | null {
   const { dialogs, dismiss } = useActionDialogs();
 
-  if(!dialogs || dialogs.length === 0){
+  if (!dialogs || dialogs.length === 0) {
     return null;
   }
 
-  return <>
-  {
-      dialogs.map((dialog, idx) => {
+  return (
+    <>
+      {dialogs.map((dialog, idx) => {
         if (!dialog) {
           return null;
         }
@@ -40,7 +40,7 @@ export default function ActionDialogs(
           dialog.onSubmit && dialog.onSubmit(false);
         };
 
-        let contentDom = <></>
+        let contentDom = <></>;
         switch (dialog.type) {
           case "alert":
             contentDom = (
@@ -106,8 +106,8 @@ export default function ActionDialogs(
             );
         }
 
-        return <React.Fragment key={idx}>{contentDom}</React.Fragment>
-      })
-  }
-  </>
+        return <React.Fragment key={idx}>{contentDom}</React.Fragment>;
+      })}
+    </>
+  );
 }

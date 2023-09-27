@@ -11,6 +11,7 @@ import {
   MenuItem,
   InputLabel,
   Button,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import TileItem from "~/components/TileItem";
@@ -77,45 +78,13 @@ export default function () {
   let contentDom = <></>;
   if (!items || items.length === 0) {
     if (!q) {
-      contentDom = <>No data</>;
+      contentDom = <Alert>No data.</Alert>;
+    } else {
+      contentDom = <Alert>No data matching your search.</Alert>;
     }
   } else {
     contentDom = (
       <>
-        <TextField
-          id="otp-item-search-filter"
-          name="otp-item-search-filter"
-          defaultValue={q || ""}
-          onChange={(e) => {
-            clearTimeout(timer.current);
-
-            timer.current = setTimeout(async () => {
-              setQ((e.target.value || "").trim());
-            }, 500);
-          }}
-          placeholder="Search for item"
-          inputProps={{
-            sx: {
-              fontSize: "caption.fontSize",
-            },
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-                <datalist id="otpItemNames">
-                  {items?.map((item) => {
-                    return <option key={item.name} value={item.name} />;
-                  })}
-                </datalist>
-              </InputAdornment>
-            ),
-          }}
-        />
         <Box
           sx={{
             display: "flex",
@@ -196,6 +165,40 @@ export default function () {
 
   return (
     <>
+      <TextField
+        id="otp-item-search-filter"
+        name="otp-item-search-filter"
+        defaultValue={q || ""}
+        onChange={(e) => {
+          clearTimeout(timer.current);
+
+          timer.current = setTimeout(async () => {
+            setQ((e.target.value || "").trim());
+          }, 500);
+        }}
+        placeholder="Search for item"
+        inputProps={{
+          sx: {
+            fontSize: "caption.fontSize",
+          },
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+              <datalist id="otpItemNames">
+                {items?.map((item) => {
+                  return <option key={item.name} value={item.name} />;
+                })}
+              </datalist>
+            </InputAdornment>
+          ),
+        }}
+      />
       {contentDom}
       <Box>
         <Button onClick={onCreateNewOtp}>New OTP</Button>

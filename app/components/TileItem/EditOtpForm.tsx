@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOtpIdentityById } from "~/utils/frontend/hooks/OtpIdentity";
+import { useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
 import { Box, Typography, Button, TextField } from "@mui/material";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import { OtpIdentity } from "~/utils/backend/OtpIdentityDAO";
@@ -14,7 +14,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
   const { mutateAsync: updateOtp, isLoading: isSaving } = useUpdateOtpIdentity(
     item.id
   );
-  const { data, isLoading } = useOtpIdentityById(item.id);
+  const { data, isLoading } = useOtpCode(item.login.totp);
 
   return (
     <form
@@ -39,7 +39,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
           <Typography sx={{ color: "text.disabled", fontWeight: "bold" }}>
             QR Code
           </Typography>
-          <img src={qrCode} style={{ marginLeft: "-1rem", width: "150px" }} />
+          <img src={qrCode} style={{ width: "150px" }} />
         </Box>
         <Box>
           <Typography sx={{ color: "text.disabled", fontWeight: "bold" }}>
