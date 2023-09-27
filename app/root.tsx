@@ -33,6 +33,7 @@ import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import ActionDialogsContext from "~/utils/frontend/hooks/ActionDialogs";
+import { NewOtpButton } from "./components/TileList";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -141,6 +142,7 @@ function App() {
                 OTP
               </Typography>
             </Link>
+            <NewOtpButton />
             <Box>
               <IconButton
                 aria-label="profile"
@@ -192,6 +194,7 @@ export default function () {
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
         <Links />
+        <script src="https://cdn.rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
       </head>
       <body>
         <CssBaseline />

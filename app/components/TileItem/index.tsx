@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useOtpIdentityById } from "~/utils/frontend/hooks/OtpIdentity";
+import { useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
 import { Box, Paper, Link, IconButton } from "@mui/material";
 import * as qrcode from "qrcode";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
@@ -17,7 +17,7 @@ export type TileItemProps = {
 
 export default function (props: TileItemProps) {
   const { item, showQrCode } = props;
-  const { data, isLoading } = useOtpIdentityById(item.id);
+  const { data, isLoading } = useOtpCode(item.login.totp);
   const { mutateAsync: deleteItem, isLoading: isDeleting } =
     useDeleteOtpIdentity(item.id);
   const [qrCode, setQrCode] = useState("");

@@ -11,12 +11,32 @@ import {
   MenuItem,
   InputLabel,
   Button,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import TileItem from "~/components/TileItem";
 import Loading from "~/components/Loading";
 import NewOtpForm from "~/components/TileItem/NewOtpForm";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
+
+export function NewOtpButton() {
+  const { modal } = useActionDialogs();
+
+  const onCreateNewOtp = () => {
+    modal({
+      showCloseButton: true,
+      size: "md",
+      title: `New OTP`,
+      message: <NewOtpForm />,
+    });
+  };
+
+  return (
+    <Button onClick={onCreateNewOtp} variant="contained">
+      New OTP
+    </Button>
+  );
+}
 
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
@@ -59,15 +79,6 @@ export default function () {
   //@ts-ignore
   const timer = useRef<ReturnType<typeof setTimeout>>(0);
 
-  const onCreateNewOtp = () => {
-    modal({
-      showCloseButton: true,
-      size: "md",
-      title: `New OTP`,
-      message: <NewOtpForm />,
-    });
-  };
-
   if (isLoading) {
     return <Loading />;
   } else if (!data) {
@@ -77,51 +88,20 @@ export default function () {
   let contentDom = <></>;
   if (!items || items.length === 0) {
     if (!q) {
-      contentDom = <>No data</>;
+      contentDom = <Alert>No data.</Alert>;
+    } else {
+      contentDom = <Alert>No data matching your search.</Alert>;
     }
   } else {
     contentDom = (
       <>
-        <TextField
-          id="otp-item-search-filter"
-          name="otp-item-search-filter"
-          defaultValue={q || ""}
-          onChange={(e) => {
-            clearTimeout(timer.current);
-
-            timer.current = setTimeout(async () => {
-              setQ((e.target.value || "").trim());
-            }, 500);
-          }}
-          placeholder="Search for item"
-          inputProps={{
-            sx: {
-              fontSize: "caption.fontSize",
-            },
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-                <datalist id="otpItemNames">
-                  {items?.map((item) => {
-                    return <option key={item.name} value={item.name} />;
-                  })}
-                </datalist>
-              </InputAdornment>
-            ),
-          }}
-        />
         <Box
           sx={{
             display: "flex",
             gap: 2,
             justifyContent: "space-between",
             alignItems: "center",
+            flexWrap: "wrap",
           }}
         >
           <FormControlLabel
@@ -133,8 +113,12 @@ export default function () {
               />
             }
             label="Show / Hide QR Code"
+            sx={{ flexShrink: 0 }}
           />
-          <FormControl variant="outlined" sx={{ minWidth: "200px" }}>
+          <FormControl
+            variant="outlined"
+            sx={{ minWidth: "200px", flexShrink: 0 }}
+          >
             <InputLabel id="sorting-label">Sort By</InputLabel>
             <Select
               labelId="sorting-label"
@@ -196,10 +180,41 @@ export default function () {
 
   return (
     <>
+      <TextField
+        id="otp-item-search-filter"
+        name="otp-item-search-filter"
+        defaultValue={q || ""}
+        onChange={(e) => {
+          clearTimeout(timer.current);
+
+          timer.current = setTimeout(async () => {
+            setQ((e.target.value || "").trim());
+          }, 500);
+        }}
+        placeholder="Search for item"
+        inputProps={{
+          sx: {
+            fontSize: "caption.fontSize",
+          },
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon />
+              <datalist id="otpItemNames">
+                {items?.map((item) => {
+                  return <option key={item.name} value={item.name} />;
+                })}
+              </datalist>
+            </InputAdornment>
+          ),
+        }}
+      />
       {contentDom}
-      <Box>
-        <Button onClick={onCreateNewOtp}>New OTP</Button>
-      </Box>
     </>
   );
 }

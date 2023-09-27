@@ -28,9 +28,15 @@ function _updateOtpIdentityFile(
 }
 
 export function getOtpIdentityResponse(email: string) {
-  return JSON.parse(
-    fs.readFileSync(_getOtpIdentityFilePath(email), "utf-8")
-  ) as OtpIdentityResponse;
+  try {
+    return JSON.parse(
+      fs.readFileSync(_getOtpIdentityFilePath(email), "utf-8")
+    ) as OtpIdentityResponse;
+  } catch (err) {
+    return {
+      items: [],
+    };
+  }
 }
 
 export async function createOtpIdentity(
