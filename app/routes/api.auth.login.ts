@@ -15,7 +15,8 @@ export async function loader(args: LoaderArgs) {
     redirectUri = BASE_API_HOST;
   } else {
     try {
-      redirectUri = `https://${new URL(request.url).hostname}`;
+      const url = new URL(request.url);
+      redirectUri = `${url.protocol}//${url.host}`;
     } catch (err) {}
   }
 
