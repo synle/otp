@@ -13,8 +13,9 @@ export default function (props: { data?: string; isLoading?: boolean }) {
     textArea.value = text;
     document.body.appendChild(textArea);
     textArea.select();
+    textArea.focus();
     document.execCommand("copy");
-    document.body.removeChild(textArea);
+    textArea.remove();
 
     toast.dismiss();
     toast.success(`Code ${text} copied to clipboard`, {
