@@ -16,7 +16,9 @@ export async function loader(args: LoaderArgs) {
   } else {
     try {
       const url = new URL(request.url);
-      redirectUri = `${url.protocol}//${url.host}`;
+      redirectUri = url.host.includes("localhost")
+        ? `${url.protocol}//${url.host}`
+        : `https://${url.host}`;
     } catch (err) {}
   }
 
@@ -27,6 +29,7 @@ export async function loader(args: LoaderArgs) {
       scopes: SCOPE,
       redirectUri,
       state: redirectUri,
+      prompt: "select_account",
     });
     return redirect(loginUrl);
   } catch (err) {
