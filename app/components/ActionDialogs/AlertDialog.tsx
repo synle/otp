@@ -7,7 +7,7 @@ import { Box } from "@mui/material";
 
 export type AlertInput = {
   title?: string;
-  message: string;
+  message: string | JSX.Element;
   yesLabel?: string;
   onYesClick?: () => void;
   noLabel?: string;

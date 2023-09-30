@@ -8,33 +8,41 @@ import { ModalInput } from "~/components/ActionDialogs/ModalDialog";
 import { PromptInput } from "~/components/ActionDialogs/PromptDialog";
 import ActionDialogs from "~/components/ActionDialogs";
 
-type AlertActionDialog = AlertInput & {
-  type: "alert";
-  message: string;
-  onSubmit?: () => void;
+type BaseDialog = {
+  key: string;
 };
 
-type ConfirmActionDialog = {
+type AlertActionDialog = BaseDialog &
+  AlertInput & {
+    type: "alert";
+    message: string | JSX.Element;
+    onSubmit?: () => void;
+  };
+
+type ConfirmActionDialog = BaseDialog & {
   type: "confirm";
-  message: string;
+  message: string | JSX.Element;
   yesLabel?: string;
   onSubmit: (yesSelected: boolean) => void;
 };
 
-type ChoiceActionDialog = ChoiceInput & {
-  type: "choice";
-  onSubmit: (yesSelected: boolean, selectedChoice?: string) => void;
-};
+type ChoiceActionDialog = BaseDialog &
+  ChoiceInput & {
+    type: "choice";
+    onSubmit: (yesSelected: boolean, selectedChoice?: string) => void;
+  };
 
-type PromptActionDialog = PromptInput & {
-  type: "prompt";
-  onSubmit: (yesSelected: boolean, newValue?: string) => void;
-};
+type PromptActionDialog = BaseDialog &
+  PromptInput & {
+    type: "prompt";
+    onSubmit: (yesSelected: boolean, newValue?: string) => void;
+  };
 
-type ModalActionDialog = ModalInput & {
-  type: "modal";
-  onSubmit: (closed: boolean) => void;
-};
+type ModalActionDialog = BaseDialog &
+  ModalInput & {
+    type: "modal";
+    onSubmit: (closed: boolean) => void;
+  };
 
 type ActionDialog =
   | AlertActionDialog
@@ -44,6 +52,8 @@ type ActionDialog =
   | ModalActionDialog;
 
 let _actionDialogs: ActionDialog[] = [];
+
+let modalId = Date.now();
 
 //
 const TargetContext = createContext({
@@ -70,33 +80,32 @@ export function useActionDialogs() {
 
   const prompt = (props: PromptInput): Promise<string | undefined> => {
     return new Promise((resolve, reject) => {
-      const { message, value, isLongPrompt } = props;
-
-      const newActionDialog: ActionDialog = {
-        ...props,
+      _actionDialogs.push({
+        key: `modal.${modalId++}`,
         type: "prompt",
         onSubmit: (yesSelected, newValue) => {
           yesSelected ? resolve(newValue) : reject();
         },
-      };
-
-      _actionDialogs = [..._actionDialogs, newActionDialog];
+        ...props,
+      });
       _invalidateQueries();
     });
   };
 
-  const confirm = (message: string, yesLabel?: string): Promise<void> => {
+  const confirm = (
+    message: string | JSX.Element,
+    yesLabel?: string
+  ): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const newActionDialog: ActionDialog = {
+      _actionDialogs.push({
+        key: `modal.${modalId++}`,
         type: "confirm",
         message,
         yesLabel,
         onSubmit: (yesSelected) => {
           yesSelected ? resolve() : reject();
         },
-      };
-
-      _actionDialogs = [..._actionDialogs, newActionDialog];
+      });
       _invalidateQueries();
     });
   };
@@ -108,7 +117,8 @@ export function useActionDialogs() {
     required?: boolean
   ): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const newActionDialog: ActionDialog = {
+      _actionDialogs.push({
+        key: `modal.${modalId++}`,
         type: "choice",
         title,
         message,
@@ -117,34 +127,30 @@ export function useActionDialogs() {
           yesSelected && newValue ? resolve(newValue) : reject();
         },
         required,
-      };
-
-      _actionDialogs = [..._actionDialogs, newActionDialog];
+      });
       _invalidateQueries();
     });
   };
 
-  const alert = (message: string): Promise<void> => {
+  const alert = (message: string | JSX.Element): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const newActionDialog: ActionDialog = {
+      _actionDialogs.push({
+        key: `modal.${modalId++}`,
         type: "alert",
         message,
-      };
-
-      _actionDialogs = [..._actionDialogs, newActionDialog];
+      });
       _invalidateQueries();
     });
   };
 
   const modal = (props: ModalInput): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const newActionDialog: ActionDialog = {
+      _actionDialogs.push({
+        key: `modal.${modalId++}`,
         type: "modal",
         onSubmit: () => {},
         ...props,
-      };
-
-      _actionDialogs = [..._actionDialogs, newActionDialog];
+      });
       _invalidateQueries();
     });
   };
@@ -158,15 +164,19 @@ export function useActionDialogs() {
     dialog = undefined;
   }
 
-  const dismiss = () => {
-    _actionDialogs.pop();
-
-    _actionDialogs = [..._actionDialogs];
-
+  const dismiss = (modalIdToDismiss?: string) => {
+    if (modalIdToDismiss) {
+      _actionDialogs = _actionDialogs.filter(
+        (modal) => modal.key !== modalIdToDismiss
+      );
+    } else {
+      _actionDialogs.pop();
+    }
     _invalidateQueries();
   };
 
   function _invalidateQueries() {
+    _actionDialogs = [..._actionDialogs];
     setData(_actionDialogs);
   }
 
