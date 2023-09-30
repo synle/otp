@@ -32,7 +32,6 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           label="Name"
-          autoFocus
           required
         />
         <TotpTextfield value={totp} onChange={(e) => setTotp(e.target.value)} />
