@@ -186,8 +186,11 @@ export default function () {
   return (
     <>
       <Autocomplete
-        defaultValue={q || ""}
-        onChange={(e, newValue) => {
+        value={q || ""}
+        onInputChange={(e, newValue, reason) => {
+          if (reason !== "input") {
+            return;
+          }
           clearTimeout(timer.current);
 
           timer.current = setTimeout(async () => {
