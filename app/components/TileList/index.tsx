@@ -19,6 +19,7 @@ import TileItem from "~/components/TileItem";
 import Loading from "~/components/Loading";
 import NewOtpForm from "~/components/TileItem/NewOtpForm";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
+import BrandIcon from "~/components/TileItem/BrandIcon";
 
 export function NewOtpButton() {
   const { modal } = useActionDialogs();
@@ -217,6 +218,17 @@ export default function () {
             }}
           />
         )}
+        renderOption={(props, matchedOptionLabel) => {
+          return (
+            <Box
+              sx={{ display: "flex", gap: 1, alignItems: "center" }}
+              {...props}
+            >
+              <BrandIcon icon={matchedOptionLabel} />
+              <Box>{matchedOptionLabel}</Box>
+            </Box>
+          );
+        }}
       />
       {contentDom}
     </>
