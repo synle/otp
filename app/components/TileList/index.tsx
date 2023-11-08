@@ -22,6 +22,8 @@ import NewOtpForm from "~/components/TileItem/NewOtpForm";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import BrandIcon from "~/components/TileItem/BrandIcon";
 
+const DEFAULT_SORTING_OPTION = "name-asc";
+
 export function NewOtpButton() {
   const { modal } = useActionDialogs();
 
@@ -44,7 +46,7 @@ export function NewOtpButton() {
 export default function () {
   const { data, isLoading } = useOtpIdentityList();
   const [q, setQ] = useState("");
-  const [sortingOption, setSortingOption] = useState("oldest-first");
+  const [sortingOption, setSortingOption] = useState(DEFAULT_SORTING_OPTION);
   const [showQrCode, setShowQrCode] = useState(false);
   const { modal } = useActionDialogs();
 
