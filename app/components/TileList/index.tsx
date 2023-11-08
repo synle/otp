@@ -188,7 +188,7 @@ export default function () {
       <Autocomplete
         value={q || ""}
         onInputChange={(e, newValue, reason) => {
-          if (reason !== "input") {
+          if (reason === "reset") {
             return;
           }
           clearTimeout(timer.current);
