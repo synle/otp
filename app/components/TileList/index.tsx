@@ -188,7 +188,13 @@ export default function () {
     <>
       <Autocomplete
         value={q || ""}
+        onChange={(e, newValue) => {
+          // when user select an option from dropdown
+          clearTimeout(timer.current);
+          setQ(newValue || "");
+        }}
         onInputChange={(e, newValue, reason) => {
+          // when user enter data from textbox
           if (reason === "reset") {
             return;
           }
