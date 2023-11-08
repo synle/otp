@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCode,
@@ -109,19 +110,23 @@ for (const brandKey of Object.keys(ICON_MAPPINGS)) {
 export default function BrandIcon(props: BrandIconProp) {
   const { icon } = props;
 
-  let mappedIcon = faUser;
-  let mappedColor = green["A100"]; // default color is green
+  const [iconSvg, iconColor] = useMemo(() => {
+    let mappedIcon = faUser;
+    let mappedColor = green["A100"]; // default color is green
 
-  for (const brandKey of Object.keys(ICON_MAPPINGS)) {
-    if (icon.match(new RegExp(brandKey, "i"))) {
-      //@ts-ignore
-      mappedIcon = ICON_MAPPINGS[brandKey];
+    for (const brandKey of Object.keys(ICON_MAPPINGS)) {
+      if (icon.match(new RegExp(brandKey, "i"))) {
+        //@ts-ignore
+        mappedIcon = ICON_MAPPINGS[brandKey];
 
-      //@ts-ignore
-      mappedColor = COLOR_MAPPINGS[brandKey];
-      break;
+        //@ts-ignore
+        mappedColor = COLOR_MAPPINGS[brandKey];
+        break;
+      }
     }
-  }
 
-  return <FontAwesomeIcon icon={mappedIcon} style={{ color: mappedColor }} />;
+    return [mappedIcon, mappedColor];
+  }, [icon]);
+
+  return <FontAwesomeIcon icon={iconSvg} style={{ color: iconColor }} />;
 }
