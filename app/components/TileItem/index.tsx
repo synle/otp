@@ -9,6 +9,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 import EditOtpForm from "~/components/TileItem/EditOtpForm";
+import BrandIcon from "~/components/TileItem/BrandIcon";
 
 export type TileItemProps = {
   showQrCode: boolean;
@@ -59,18 +60,21 @@ export default function (props: TileItemProps) {
       }}
       elevation={3}
     >
-      <Link
-        sx={{
-          color: "text.disabled",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          cursor: "pointer",
-        }}
-        underline="none"
-        onClick={onEdit}
-      >
-        {item.name}
-      </Link>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+        <BrandIcon icon={item.name} />
+        <Link
+          sx={{
+            color: "text.disabled",
+            fontWeight: "bold",
+            textTransform: "uppercase",
+            cursor: "pointer",
+          }}
+          underline="none"
+          onClick={onEdit}
+        >
+          {item.name}
+        </Link>
+      </Box>
       {showQrCode ? (
         <img
           src={qrCode}
