@@ -13,6 +13,7 @@ import {
   Button,
   Alert,
   Autocomplete,
+  Link,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import TileItem from "~/components/TileItem";
@@ -96,7 +97,15 @@ export default function () {
     if (!q) {
       contentDom = <Alert>No data.</Alert>;
     } else {
-      contentDom = <Alert>No data matching your search.</Alert>;
+      contentDom = (
+        <Alert>
+          No data matching your search.{" "}
+          <Link onClick={() => setQ("")}>
+            <strong>Clear search</strong>
+          </Link>
+          .
+        </Alert>
+      );
     }
   } else {
     contentDom = (

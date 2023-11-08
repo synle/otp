@@ -34,7 +34,8 @@ import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import ActionDialogsContext from "~/utils/frontend/hooks/ActionDialogs";
-import { NewOtpButton } from "./components/TileList";
+import { NewOtpButton } from "~/components/TileList";
+import "~/root.css";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
