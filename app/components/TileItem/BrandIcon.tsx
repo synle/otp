@@ -1,5 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCode } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCode,
+  faVideo,
+  faCloud,
+  faCartShopping,
+  faUser,
+  faGamepad,
+} from "@fortawesome/free-solid-svg-icons";
 import {
   faGoogle,
   faMicrosoft,
@@ -47,6 +54,19 @@ const ICON_MAPPINGS = {
   Bitbucket: faBitbucket,
   Facebook: faFacebook,
   Npm: faNpm,
+  Zoom: faVideo,
+  Docker: faCloud,
+  Vultr: faCloud,
+  Heroku: faCloud,
+  Amazon: faCartShopping,
+  NewEgg: faCartShopping,
+  Samsung: faUser,
+  Nvidia: faUser,
+  Guru: faUser,
+  "ID.Me": faUser,
+  Epic: faGamepad,
+  Nintendo: faGamepad,
+  Robinhood: faUser,
 };
 
 const COLOR_MAPPINGS = {};
@@ -89,7 +109,7 @@ for (const brandKey of Object.keys(ICON_MAPPINGS)) {
 export default function BrandIcon(props: BrandIconProp) {
   const { icon } = props;
 
-  let mappedIcon = faCode;
+  let mappedIcon = faUser;
   let mappedColor = green["A100"]; // default color is green
 
   for (const brandKey of Object.keys(ICON_MAPPINGS)) {
