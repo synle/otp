@@ -2,12 +2,6 @@ import { json, LoaderFunction, Response } from "@remix-run/node";
 import type { LoaderArgs, ActionArgs } from "@remix-run/node";
 import { getSession, SessionData } from "~/utils/backend/Session";
 import { authenticator } from "otplib";
-import { getOtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
-import {
-  deleteOtpIdentity,
-  updateOtpIdentity,
-  createOtpIdentity,
-} from "~/utils/backend/OtpIdentityDAO";
 
 export async function action(args: ActionArgs) {
   const { request } = args;

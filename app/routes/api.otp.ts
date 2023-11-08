@@ -10,7 +10,7 @@ export async function loader(args: LoaderArgs) {
     const email = session.get("email");
 
     if (email) {
-      return json(getOtpIdentityResponse(email));
+      return json(await getOtpIdentityResponse(email));
     }
 
     return new Response(`Unauthorized`, {

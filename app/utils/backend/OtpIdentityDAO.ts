@@ -48,7 +48,7 @@ export async function createOtpIdentity(
     };
   }
 ) {
-  const otpIdentityResponse = getOtpIdentityResponse(email);
+  const otpIdentityResponse = await getOtpIdentityResponse(email);
 
   if (!otpIdentityResponse) {
     throw "OtpIdentityFile not found";
@@ -73,7 +73,7 @@ export async function updateOtpIdentity(
     };
   }
 ) {
-  const otpIdentityResponse = getOtpIdentityResponse(email);
+  const otpIdentityResponse = await getOtpIdentityResponse(email);
 
   if (!otpIdentityResponse) {
     throw "OtpIdentityFile not found";
@@ -95,7 +95,7 @@ export async function updateOtpIdentity(
 }
 
 export async function deleteOtpIdentity(email: string, id: string) {
-  const otpIdentityResponse = getOtpIdentityResponse(email);
+  const otpIdentityResponse = await getOtpIdentityResponse(email);
 
   if (!otpIdentityResponse) {
     throw "OtpIdentityFile not found";
