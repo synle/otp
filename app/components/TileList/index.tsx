@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useOtpIdentityList } from "~/utils/frontend/hooks/OtpIdentity";
 import {
   Box,
@@ -21,6 +21,7 @@ import Loading from "~/components/Loading";
 import NewOtpForm from "~/components/TileItem/NewOtpForm";
 import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 import BrandIcon from "~/components/TileItem/BrandIcon";
+import { useNavigate } from "@remix-run/react";
 
 const DEFAULT_SORTING_OPTION = "name-asc";
 
@@ -44,6 +45,8 @@ export function NewOtpButton() {
 }
 
 export default function () {
+  const navigate = useNavigate();
+
   const { data, isLoading } = useOtpIdentityList();
   const [q, setQ] = useState("");
   const [sortingOption, setSortingOption] = useState(DEFAULT_SORTING_OPTION);
@@ -88,6 +91,26 @@ export default function () {
     return (items?.map((item) => item.name) || []).sort();
   }, [items]);
 
+  // on first load, set it up
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    setQ(searchParams.get("q") || "");
+    setSortingOption(
+      searchParams.get("sortingOption") || DEFAULT_SORTING_OPTION
+    );
+    setShowQrCode(searchParams.get("showQrCode") === "1" ? true : false);
+  }, []);
+
+  // persist the params into search query
+  useEffect(() => {
+    navigate(
+      `/?q=${q}&sortingOption=${sortingOption}&showQrCode=${
+        showQrCode ? "1" : "0"
+      }`,
+      { replace: true }
+    );
+  }, [q, sortingOption, showQrCode]);
+
   if (isLoading) {
     return <Loading />;
   } else if (!data) {
@@ -129,7 +152,7 @@ export default function () {
                 color="primary"
               />
             }
-            label="Show / Hide QR Code"
+            label="QR Code"
             sx={{ flexShrink: 0 }}
           />
           <FormControl
