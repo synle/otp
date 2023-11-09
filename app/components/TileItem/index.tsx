@@ -76,10 +76,7 @@ export default function (props: TileItemProps) {
         </Link>
       </Box>
       {showQrCode ? (
-        <img
-          src={qrCode}
-          style={{ marginLeft: "-1rem", marginBottom: "2rem" }}
-        />
+        <img src={qrCode} style={{ marginLeft: "-1rem" }} />
       ) : (
         <Box sx={{ display: "flex", gap: 3 }}>
           <OtpCodeLabel data={data} isLoading={isLoading} />
