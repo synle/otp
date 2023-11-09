@@ -3,7 +3,7 @@ import DataTable, { ColumnFilter } from "~/components/DataTable";
 import TileList from "~/components/TileList";
 import { Box, Typography } from "@mui/material";
 
-export default function Index() {
+export default function () {
   const { data: profile, isLoading } = useMeProfile();
 
   if (isLoading) {
