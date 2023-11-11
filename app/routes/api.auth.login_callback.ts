@@ -8,7 +8,9 @@ export const loader: LoaderFunction = async (args: LoaderArgs) => {
   const { request } = args;
   try {
     const url = new URL(request.url);
-    const redirectUri = url.searchParams.get("state") || "";
+    const redirectUri = process.env.AAD_REDIRECT_URL
+      ? process.env.AAD_REDIRECT_URL
+      : url.searchParams.get("state") || "";
 
     const response = await confidentialClientApplication.acquireTokenByCode({
       scopes: SCOPE,
