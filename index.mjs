@@ -1,5 +1,5 @@
 // https://remix.run/docs/en/main/start/quickstart
-import 'dotenv/config';
+import "dotenv/config";
 
 import { createRequestHandler } from "@remix-run/express";
 import express from "express";
