@@ -1,27 +1,27 @@
-import { useState, useRef, useMemo, useEffect } from "react";
-import { useOtpIdentityList } from "~/utils/frontend/hooks/OtpIdentity";
+import SearchIcon from "@mui/icons-material/Search";
 import {
-  Box,
-  TextField,
-  InputAdornment,
-  Checkbox,
-  FormControlLabel,
-  FormControl,
-  Select,
-  MenuItem,
-  InputLabel,
-  Button,
   Alert,
   Autocomplete,
+  Box,
+  Button,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  InputAdornment,
+  InputLabel,
   Link,
+  MenuItem,
+  Select,
+  TextField,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import TileItem from "~/components/TileItem";
-import Loading from "~/components/Loading";
-import NewOtpForm from "~/components/TileItem/NewOtpForm";
-import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
-import BrandIcon from "~/components/TileItem/BrandIcon";
 import { useNavigate } from "@remix-run/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useActionDialogs } from 'react-dialog-mui';
+import Loading from "~/components/Loading";
+import TileItem from "~/components/TileItem";
+import BrandIcon from "~/components/TileItem/BrandIcon";
+import NewOtpForm from "~/components/TileItem/NewOtpForm";
+import { useOtpIdentityList } from "~/utils/frontend/hooks/OtpIdentity";
 
 const DEFAULT_SORTING_OPTION = "name-asc";
 

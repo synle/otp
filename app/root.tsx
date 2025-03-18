@@ -26,11 +26,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ActionDialogsContext } from 'react-dialog-mui';
 import { QueryClient, QueryClientProvider } from "react-query";
 import Loading from "~/components/Loading";
 import { NewOtpButton } from "~/components/TileList";
-import { ActionDialogsContext } from "~/utils/frontend/ActionDialogs";
 import { useMeProfile } from "~/utils/frontend/hooks/Auth";
 
 function _getInitials(fullName: string) {
@@ -183,6 +183,16 @@ function AppContextReducer(props: { children: JSX.Element | JSX.Element[] }) {
       },
     });
   }, [prefersDarkMode]);
+
+  useEffect(() => {
+    setInit(true);
+  }, []);
+
+  const [init, setInit] = useState(false);
+
+  if (!init) {
+    return null;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

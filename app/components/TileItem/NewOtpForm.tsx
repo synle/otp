@@ -1,24 +1,21 @@
 // @ts-nocheck
 
-import { useState, useEffect, useRef } from "react";
-import { useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
 import {
   Box,
-  Typography,
   Button,
-  TextField,
-  FormControlLabel,
   FormControl,
-  Select,
-  MenuItem,
   InputLabel,
-  badgeClasses,
+  MenuItem,
+  Select,
+  TextField,
+  Typography
 } from "@mui/material";
-import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
-import { useCreateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
+import { useEffect, useRef, useState } from "react";
+import { useActionDialogs } from 'react-dialog-mui';
 import { toast } from "react-toastify";
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 import TotpTextfield from "~/components/TileItem/TotpTextfield";
+import { useCreateOtpIdentity, useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
 
 function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
   const myDivRef = useRef(null);
