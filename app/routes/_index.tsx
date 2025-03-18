@@ -1,7 +1,6 @@
-import { useMeProfile } from "~/utils/frontend/hooks/OtpIdentity";
-import DataTable, { ColumnFilter } from "~/components/DataTable";
+import { Box } from "@mui/material";
 import TileList from "~/components/TileList";
-import { Box, Typography } from "@mui/material";
+import { useMeProfile } from "~/utils/frontend/hooks/Auth";
 
 export default function () {
   const { data: profile, isLoading } = useMeProfile();

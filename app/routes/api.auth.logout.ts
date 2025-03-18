@@ -2,7 +2,7 @@ import { redirect, Response, LoaderFunction } from "@remix-run/node";
 import type { LoaderArgs } from "@remix-run/node";
 import { getSession, destroySession } from "~/utils/backend/Session";
 
-export async function loader(args: LoaderArgs) {
+export const loader: LoaderFunction = async (args: LoaderArgs) => {
   const { request } = args;
   try {
     const session = await getSession(request.headers.get("Cookie"));
@@ -16,4 +16,4 @@ export async function loader(args: LoaderArgs) {
       status: 400,
     });
   }
-}
+};
