@@ -1,13 +1,10 @@
 import { createCookieSessionStorage } from "@remix-run/node"; // or cloudflare/deno
+import type { User } from "~/types.d.ts";
 import { CLIENT_SECRET } from "~/utils/backend/SSO";
 
 export type SessionData = {
-  requestId: string;
-  fullName: string;
-  jobTitle: string;
-  email: string;
-  username: string;
-  initials: string;
+  access_token: string;
+  user: User;
 };
 
 type SessionFlashData = {
@@ -24,7 +21,7 @@ const { getSession, commitSession, destroySession } =
       // domain: "remix.run",
       // Expires can also be set (although maxAge overrides it when used in combination).
       // Note that this method is NOT recommended as `new Date` creates only one date on each server deployment, not a dynamic date in the future!
-      expires: new Date(Date.now() + 60_000 * 60 * 24 * 7 * 4),
+      // expires: new Date(Date.now() + 60_000 * 60 * 24 * 7 * 4),
       httpOnly: true,
       // maxAge: 60,
       // path: "/",
@@ -35,4 +32,3 @@ const { getSession, commitSession, destroySession } =
   });
 
 export { commitSession, destroySession, getSession };
-

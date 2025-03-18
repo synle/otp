@@ -1,17 +1,20 @@
-import { json, LoaderFunction, Response } from "@remix-run/node";
-import type { LoaderArgs, ActionArgs } from "@remix-run/node";
-import { getSession, SessionData } from "~/utils/backend/Session";
+import type { ActionArgs } from "@remix-run/node";
+import { Response } from "@remix-run/node";
+import type { User } from "~/types.d.ts";
 import {
+  createOtpIdentity,
   deleteOtpIdentity,
   updateOtpIdentity,
-  createOtpIdentity,
 } from "~/utils/backend/OtpIdentityDAO";
+import { getSession } from "~/utils/backend/Session";
 
 export async function action(args: ActionArgs) {
   const { request, params } = args;
   const id = params.id || "";
   const session = await getSession(request.headers.get("Cookie"));
-  const email = session.get("email");
+
+  const user = session.get("user") as User;
+  const email = user.mail;
 
   if (!email) {
     return new Response(`Unauthorized`, {
