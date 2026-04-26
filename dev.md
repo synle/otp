@@ -14,17 +14,29 @@ docs (what the app does, how to deploy it) see [`README.md`](./README.md).
 │   │   ├── TileItem/       # One identity tile + create/edit forms + QR scanner
 │   │   └── TileList/       # Grid of TileItems with search/sort
 │   ├── routes/             # Remix file-based routes
-│   │   ├── _index.tsx      # `/` (root identity grid)
-│   │   ├── $.tsx           # SPA catch-all
-│   │   ├── api.auth.*.ts   # AAD OAuth flow + session
+│   │   ├── _index.tsx                            # `/` (root identity grid)
+│   │   ├── $.tsx                                 # SPA catch-all
+│   │   ├── api.auth.login.ts                     # legacy → /api/auth/microsoft/login
+│   │   ├── api.auth.$provider.login.ts           # provider-aware login
+│   │   ├── api.auth.$provider.login_callback.ts  # GET (Google) + POST (AAD form_post)
+│   │   ├── api.auth.logout.ts / api.auth.me.ts   # session lifecycle
 │   │   ├── api.otp.ts      # GET list
 │   │   ├── api.otp.$id.ts  # POST/PUT/DELETE identity
 │   │   └── api.otp_code.ts # Generate the rolling 6-digit code
 │   ├── utils/
-│   │   ├── backend/        # File-backed DAO, session, SSO config
+│   │   ├── backend/
+│   │   │   ├── OtpIdentityDAO.ts  # File-backed vault keyed by <email>-<provider>
+│   │   │   ├── Session.ts         # Cookie session + secret resolution
+│   │   │   └── auth/              # Pluggable SSO provider adapters
+│   │   │       ├── types.ts       # AuthProvider interface
+│   │   │       ├── registry.ts    # getProvider(id)
+│   │   │       ├── microsoft.ts   # AAD/MSAL adapter
+│   │   │       ├── google.ts      # Google OAuth2 adapter
+│   │   │       ├── state.ts       # OAuth state nonce + pre-auth cookie
+│   │   │       └── redirectUri.ts # Per-provider redirect URI resolution
 │   │   └── frontend/       # React-query hooks, pure helpers
 │   ├── root.tsx            # App shell + provider tree
-│   └── types.d.ts          # AAD `/me` profile shape
+│   └── types.d.ts          # Provider-agnostic User shape + AuthProviderId
 ├── index.mjs               # Express entry that hosts the Remix build
 ├── vitest.config.ts        # Test runner config
 └── .github/workflows/      # CI — defers to synle/workflows
@@ -33,10 +45,26 @@ docs (what the app does, how to deploy it) see [`README.md`](./README.md).
 ## Prerequisites
 
 - Node 18+ (the CI workflow pins Node 24).
-- An Azure AD app registration if you want the SSO flow to actually log you
-  in. Without it the app boots, but `useMeProfile` returns 401 and you'll see
-  the "Log in" splash. See `app/utils/backend/SSO.ts` for the env vars it
-  reads.
+- An OAuth client from at least one provider so the SSO flow can actually
+  log you in. Without one the app boots, but `useMeProfile` returns 401 and
+  you'll see the login splash. See `app/utils/backend/auth/microsoft.ts`
+  and `auth/google.ts` for the env vars they read.
+
+### Picking a provider
+
+Each provider's vault is independent on disk (see "Persistence" below), so
+in dev you can configure either or both:
+
+- **Microsoft** — Azure AD app registration with a client secret. Set
+  `AAD_SSO_TENANT_ID`, `AAD_SSO_CLIENT_ID`, `AAD_SSO_CLIENT_VALUE`. Use
+  `common` as the tenant id for personal MSAs / multi-tenant.
+- **Google** — Google Cloud Console OAuth 2.0 Client. Set
+  `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`. Register the dev
+  redirect URI (`http://localhost:3000/api/auth/google/login_callback`) in
+  the console — Google does an exact-match check.
+
+In production also set `SESSION_SECRET` (the app refuses to boot without
+one).
 
 ## Day-to-day commands
 
@@ -74,14 +102,28 @@ npm run coverage       # alias of test-ci; output in ./coverage
   axios, the Microsoft Graph SDK, the camera scanner, …) use `vi.mock` to
   replace them with stubs. See `app/components/TileItem/BrandIcon.spec.tsx`
   for the pattern.
+- For env-driven code (auth secrets, redirect overrides), use `vi.stubEnv`
+  in `beforeEach` and `vi.unstubAllEnvs` in `afterEach`. Examples:
+  `app/utils/backend/auth/state.spec.ts`, `redirectUri.spec.ts`,
+  `Session.spec.ts`.
 - The `OtpIdentityDAO` writes JSON files relative to `process.cwd()`. Tests
   `chdir` into a fresh `mkdtempSync` directory in `beforeEach` so they never
   pollute the repo and stay isolated from each other.
 
 ### What's currently covered
 
-- `app/utils/backend/OtpIdentityDAO.ts` — full CRUD + lifecycle, plus edge
-  cases (corrupted JSON, missing file, caller-supplied id override, etc.)
+- `app/utils/backend/OtpIdentityDAO.ts` — full CRUD + lifecycle, sanitizer,
+  legacy migration, provider isolation.
+- `app/utils/backend/Session.ts` — secret resolution policy.
+- `app/utils/backend/auth/state.ts` — nonce round trip, tampering, cross-
+  provider mismatch, missing cookie.
+- `app/utils/backend/auth/microsoft.ts` — profile normalization (live MSAL
+  flow is left to integration testing).
+- `app/utils/backend/auth/google.ts` — profile normalization, auth URL,
+  code exchange, userinfo, full `authenticate` flow (axios mocked).
+- `app/utils/backend/auth/redirectUri.ts` — env precedence, request-URL
+  fallback.
+- `app/utils/backend/auth/registry.ts` — known + unknown provider lookup.
 - `app/utils/frontend/getInitials.ts` — pure helper.
 - `app/components/TileItem/BrandIcon.tsx` — brand keyword → icon/color
   resolution, via a mocked `<FontAwesomeIcon>`.
@@ -96,6 +138,21 @@ npm run coverage       # alias of test-ci; output in ./coverage
    clear.
 4. Run `npm run test` — Vitest will pick the file up automatically based on
    the `**/*.spec.{ts,tsx}` glob in `vitest.config.ts`.
+
+## Adding another SSO provider
+
+1. Create `app/utils/backend/auth/<name>.ts` exporting an `AuthProvider`.
+   Keep profile normalization in a separate exported function so it can be
+   unit-tested without HTTP.
+2. Add the provider to `_PROVIDERS` in
+   `app/utils/backend/auth/registry.ts`.
+3. Extend `AuthProviderId` in `app/types.d.ts`.
+4. Add the provider to `_REDIRECT_ENV_KEY` in
+   `auth/redirectUri.ts` and document the env vars it reads.
+5. Add a spec (mock `axios` or the SDK) covering the auth URL, code
+   exchange, and profile normalization.
+6. Add a button in `app/root.tsx` linking to
+   `/api/auth/<name>/login`.
 
 ## Continuous Integration
 
@@ -125,9 +182,11 @@ Because we expose `npm run test-ci`, CI runs it automatically with coverage.
 - **Imperative dialogs**: open modals/prompts via the
   `useActionDialogs()` hook, not by mounting `<Dialog>` directly. The hook
   manages a stack so nested dialogs work.
-- **Persistence**: identities are stored in `${email}.cred.json` in the
-  process CWD. There's no DB. The file is owned by whichever email is in the
-  AAD `/me` profile.
+- **Persistence**: identities are stored in
+  `<sanitized-email>-<provider>.cred.json` in the process CWD. There's no DB.
+  Two providers ⇒ two vaults for the same human; this is intentional.
+  Pre-multi-provider files (`<email>.cred.json`) are auto-migrated to the
+  Microsoft variant on first read.
 - **The `tolp` field name** in `api.otp_code.ts` and the `useOtpCode` hook is
   a typo that's consistent on both sides — change them together if you want
   to fix it, otherwise leave it alone.

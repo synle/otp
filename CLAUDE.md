@@ -19,6 +19,45 @@ Do NOT use:
 - Always use **squash and merge** when merging PRs. Never use merge commits or rebase merges. This keeps the git history clean with one commit per PR.
 - You may `git merge origin/main` or `git merge origin/master` locally to sync branches, but PR merges must always be squash merges.
 
+## Auth architecture
+
+The app supports **multiple SSO providers** (Microsoft + Google) behind a small
+adapter pattern. The big-picture rules to keep in mind when changing anything
+in `app/utils/backend/auth/` or the `api.auth.*` routes:
+
+- **Provider registry, not branching.** `app/utils/backend/auth/registry.ts`
+  is the single place that lists known providers. Routes only call
+  `getProvider(params.provider)` and use the `AuthProvider` interface — they
+  never `if (id === "microsoft")`.
+- **Provider-agnostic `User`.** `app/types.d.ts` defines `User` as
+  `{ id, email, displayName, provider }`. Anything Graph-shaped or
+  Google-shaped lives behind the adapter and never escapes into routes /
+  frontend.
+- **Vaults are namespaced per provider.** The on-disk file is
+  `<sanitized-email>-<provider>.cred.json`. The same email logging in via
+  Microsoft vs Google sees two independent vaults — by design (no email-
+  verification trust required, no cross-provider takeover possible).
+  Pre-existing `<email>.cred.json` files are auto-migrated to
+  `<email>-microsoft.cred.json` on first read for a Microsoft user.
+- **OAuth state nonce.** The login route mints a random nonce, signs it into
+  a short-lived `__auth_state` cookie alongside the providerId and
+  redirectUri, and the callback rejects mismatches. This is the login-CSRF
+  defence and the reason the callback never trusts its own request URL.
+- **Microsoft uses `responseMode=form_post` (POST callback). Google uses the
+  default GET callback.** The `$provider.login_callback` route exports both
+  `loader` and `action` so the same file handles either.
+
+## Required env vars
+
+| Var | Purpose |
+| --- | --- |
+| `SESSION_SECRET` | Signs the session + pre-auth cookies. **Required in production** — boot fails otherwise. Falls back to `AAD_SSO_CLIENT_VALUE` for legacy deployments, then a dev literal. |
+| `AAD_SSO_TENANT_ID` / `AAD_SSO_CLIENT_ID` / `AAD_SSO_CLIENT_VALUE` | Microsoft / AAD app registration. |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Google Cloud Console OAuth client. |
+| `MICROSOFT_REDIRECT_URL` / `GOOGLE_REDIRECT_URL` | (optional) Per-provider redirect URI override. |
+| `AUTH_BASE_HOST_URL` | (optional) Origin used to build redirect URIs when no per-provider override is set. |
+| `AAD_REDIRECT_URL` / `AAD_SSO_BASE_HOST_URL` | Legacy AAD-only aliases, still honored. |
+
 ## Test Stack
 
 This project uses **Vitest** for unit tests, aligned with the conventions used in
@@ -37,6 +76,9 @@ consistent:
 - Component tests opt into a DOM by adding `// @vitest-environment jsdom` at
   the top of the spec file. Use `@testing-library/react` for rendering and
   `vi.mock` to stub heavy/IO-bound deps (e.g. FontAwesome, axios).
+- For env-driven code, prefer `vi.stubEnv` (with `vi.unstubAllEnvs` in
+  `afterEach`) over mutating `process.env` directly. See
+  `app/utils/backend/auth/state.spec.ts` for the pattern.
 
 ## CI
 

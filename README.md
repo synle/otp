@@ -1,6 +1,6 @@
 # otp
 
-A basic web application developed using Remix.js and React. This app offers Azure AD Single Sign-On (SSO) login functionality and enables you to oversee Multi-Factor Authentication (MFA) Time-Based One-Time Password (TOPT) tokens from various providers.
+A basic web application developed using Remix.js and React. This app offers Single Sign-On (SSO) login via either **Microsoft / Azure AD** or **Google** and enables you to oversee Multi-Factor Authentication (MFA) Time-Based One-Time Password (TOPT) tokens from various providers.
 
 ## Background
 
@@ -19,7 +19,10 @@ Numerous apps offer the capability to sync and manage your OTPs. However, many o
 - Instascan for QR Code scanner.
 - otplib for OTP code generation.
 - Data is currently persisted using file. Encryption will come at a later dates.
-- Azure AD for OAuth / authentication.
+- Azure AD or Google for OAuth / authentication. Each provider's data lives in
+  its own on-disk vault (`<email>-microsoft.cred.json` /
+  `<email>-google.cred.json`) — pick one and stick with it; logging in through
+  the other provider gives you a brand new empty list.
 
 ## Features
 
@@ -50,12 +53,30 @@ The QR code scanner within the new OTP view provides a fast way to scan a QR cod
 
 ## How to run in dev?
 
-Update the .env file for the Azure AD login. Then rename the file as `.env`.
+Configure at least one SSO provider in your `.env`. You can use either or
+both; whichever button you click on the login screen drives the rest of the
+session.
+
+```env
+# Required in production. In dev, falls back to AAD_SSO_CLIENT_VALUE then a
+# literal so the app boots without env vars.
+SESSION_SECRET=...
+
+# Microsoft / Azure AD
+AAD_SSO_TENANT_ID=common
+AAD_SSO_CLIENT_ID=...
+AAD_SSO_CLIENT_VALUE=...
+
+# Google (register the dev redirect URI in the Google Cloud Console:
+# http://localhost:3000/api/auth/google/login_callback)
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+```
 
 ```bash
 npm run dev
 
-# test locally
+# test locally over HTTPS (camera / OAuth need it)
 ngrok http 3000
 ```
 
