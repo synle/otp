@@ -29,7 +29,8 @@ const PRE_AUTH_TTL_SECONDS = 5 * 60; // 5 minutes is plenty for the OAuth dance
  * production we hard-fail rather than silently accept forgeable state.
  */
 function _resolveStateSecret(): string {
-  const fromEnv = process.env.SESSION_SECRET || process.env.AAD_SSO_CLIENT_VALUE;
+  const fromEnv =
+    process.env.SESSION_SECRET || process.env.AAD_SSO_CLIENT_VALUE;
   if (fromEnv) {
     return fromEnv;
   }

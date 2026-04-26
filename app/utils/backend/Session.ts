@@ -33,7 +33,8 @@ type SessionFlashData = {
  * means anyone can forge a session. We hard-fail at boot in that case.
  */
 export function _resolveSessionSecret(): string {
-  const fromEnv = process.env.SESSION_SECRET || process.env.AAD_SSO_CLIENT_VALUE;
+  const fromEnv =
+    process.env.SESSION_SECRET || process.env.AAD_SSO_CLIENT_VALUE;
   if (fromEnv) {
     return fromEnv;
   }

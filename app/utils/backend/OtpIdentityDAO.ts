@@ -199,9 +199,9 @@ function _migrateJsonVaultIfPresent(key: UserKey): void {
     if (!fs.existsSync(abs)) continue;
 
     try {
-      const parsed = JSON.parse(fs.readFileSync(abs, "utf-8")) as Partial<
-        OtpIdentityResponse
-      >;
+      const parsed = JSON.parse(
+        fs.readFileSync(abs, "utf-8")
+      ) as Partial<OtpIdentityResponse>;
       const items = Array.isArray(parsed?.items) ? parsed.items : [];
       _bulkInsert(userId, items);
       fs.renameSync(abs, `${abs}.migrated`);

@@ -8,14 +8,17 @@ import {
   MenuItem,
   Select,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import { useActionDialogs } from 'react-dialog-mui';
+import { useActionDialogs } from "react-dialog-mui";
 import { toast } from "react-toastify";
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 import TotpTextfield from "~/components/TileItem/TotpTextfield";
-import { useCreateOtpIdentity, useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
+import {
+  useCreateOtpIdentity,
+  useOtpCode,
+} from "~/utils/frontend/hooks/OtpIdentity";
 
 /**
  * Live camera view that scans QR codes via the global `Instascan` script

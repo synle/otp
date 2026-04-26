@@ -27,7 +27,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
-import { ActionDialogsContext } from 'react-dialog-mui';
+import { ActionDialogsContext } from "react-dialog-mui";
 import { QueryClient, QueryClientProvider } from "react-query";
 import Loading from "~/components/Loading";
 import { NewOtpButton } from "~/components/TileList";
@@ -99,8 +99,8 @@ function App() {
             You are not authenticated, please log in to continue.
           </Typography>
           <Typography variant="body2" sx={{ marginBottom: 2, opacity: 0.7 }}>
-            Microsoft and Google accounts have separate vaults — pick one
-            and stick with it.
+            Microsoft and Google accounts have separate vaults — pick one and
+            stick with it.
           </Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             <Button

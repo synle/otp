@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useActionDialogs } from 'react-dialog-mui';
+import { useActionDialogs } from "react-dialog-mui";
 import Loading from "~/components/Loading";
 import TileItem from "~/components/TileItem";
 import BrandIcon from "~/components/TileItem/BrandIcon";

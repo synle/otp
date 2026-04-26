@@ -9,7 +9,10 @@ import { describe, expect, test, vi } from "vitest";
  * rendering or having to install jest-dom matchers.
  */
 vi.mock("@fortawesome/react-fontawesome", () => ({
-  FontAwesomeIcon: (props: { icon: { iconName: string }; style: { color: string } }) => (
+  FontAwesomeIcon: (props: {
+    icon: { iconName: string };
+    style: { color: string };
+  }) => (
     <span
       data-testid="fa-icon"
       data-icon-name={props.icon.iconName}

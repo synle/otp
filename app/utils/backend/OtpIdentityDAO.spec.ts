@@ -150,9 +150,10 @@ describe("OtpIdentityDAO", () => {
         name: "Second",
         login: { totp: "otpauth://2" },
       });
-      expect(
-        getOtpIdentityResponse(MS_KEY).items.map((i) => i.name)
-      ).toEqual(["First", "Second"]);
+      expect(getOtpIdentityResponse(MS_KEY).items.map((i) => i.name)).toEqual([
+        "First",
+        "Second",
+      ]);
     });
   });
 
@@ -215,13 +216,17 @@ describe("OtpIdentityDAO", () => {
       fs.writeFileSync(
         newLayoutFile,
         JSON.stringify({
-          items: [{ id: "n1", name: "FromNew", login: { totp: "otpauth://n" } }],
+          items: [
+            { id: "n1", name: "FromNew", login: { totp: "otpauth://n" } },
+          ],
         })
       );
       fs.writeFileSync(
         legacyLayoutFile,
         JSON.stringify({
-          items: [{ id: "l1", name: "FromLegacy", login: { totp: "otpauth://l" } }],
+          items: [
+            { id: "l1", name: "FromLegacy", login: { totp: "otpauth://l" } },
+          ],
         })
       );
 
@@ -251,7 +256,11 @@ describe("OtpIdentityDAO", () => {
         newLayoutFile,
         JSON.stringify({
           items: [
-            { id: "y", name: "Y-should-be-ignored", login: { totp: "otpauth://y" } },
+            {
+              id: "y",
+              name: "Y-should-be-ignored",
+              login: { totp: "otpauth://y" },
+            },
           ],
         })
       );

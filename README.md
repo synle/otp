@@ -181,9 +181,9 @@ The workflow needs two GitHub Actions secrets, defined on the
 environment). Putting them on an environment instead of repo-wide lets
 you require manual approval before a deploy runs.
 
-| Secret | How to get it |
-| --- | --- |
-| `AZURE_WEBAPP_NAME` | The app name from step 1 (e.g. `otp-yourname`). Plain string, no quotes. |
+| Secret                         | How to get it                                                                                                                                                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `AZURE_WEBAPP_NAME`            | The app name from step 1 (e.g. `otp-yourname`). Plain string, no quotes.                                                                                                                                           |
 | `AZURE_WEBAPP_PUBLISH_PROFILE` | Run `az webapp deployment list-publishing-profiles -g $RG -n $APP --xml` and paste the **entire XML output** as the secret value. The action authenticates with this — no Azure AD app/service principal required. |
 
 If you'd rather use OIDC federated credentials (no static secret), set up a
