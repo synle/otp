@@ -59,6 +59,28 @@ in `app/utils/backend/auth/` or the `api.auth.*` routes:
 | `MICROSOFT_REDIRECT_URL` / `GOOGLE_REDIRECT_URL` | (optional) Per-provider redirect URI override. |
 | `AUTH_BASE_HOST_URL` | (optional) Origin used to build redirect URIs when no per-provider override is set. |
 | `AAD_REDIRECT_URL` / `AAD_SSO_BASE_HOST_URL` | Legacy AAD-only aliases, still honored. |
+| `OTP_DB_PATH` | (optional) Path to the SQLite file. Absolute is used as-is, relative resolves against cwd. Defaults to `${cwd}/otp.db`. Used in production deploys to point at a persistent volume (e.g. `/home/site/data/otp.db` on Azure App Service). |
+| `PORT` | Bound by `index.mjs`. Azure App Service sets this for you. |
+
+## Azure deployment
+
+Deployed as an **Azure App Service for Linux** (Node 24) via
+[`.github/workflows/deploy-azure.yml`](./.github/workflows/deploy-azure.yml)
+— manual `workflow_dispatch` trigger, `azure/webapps-deploy@v3` action,
+publish-profile auth.
+
+Required GitHub Actions secrets (on the `azure-production` environment):
+
+| Secret | Source |
+| --- | --- |
+| `AZURE_WEBAPP_NAME` | The Web App's resource name. |
+| `AZURE_WEBAPP_PUBLISH_PROFILE` | `az webapp deployment list-publishing-profiles -g $RG -n $APP --xml` — paste full XML. |
+
+Application settings to configure on the Web App itself (not GitHub):
+all the env vars above, plus `OTP_DB_PATH=/home/site/data/otp.db`,
+`SCM_DO_BUILD_DURING_DEPLOYMENT=false`, `WEBSITE_NODE_DEFAULT_VERSION=~24`.
+
+End-to-end CLI walkthrough lives in `README.md` ("How to deploy to Azure").
 
 ## Test Stack
 

@@ -1,0 +1,58 @@
+name: deploy-azure
+
+# Manual-only by default. Flip on the `push` trigger below if you want every
+# main commit to ship — but a personal OTP manager is generally happier with
+# explicit "Run workflow" releases.
+on:
+  workflow_dispatch:
+  # push:
+  #   tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24.x"
+
+jobs:
+  deploy:
+    name: Deploy to Azure App Service (Linux)
+    runs-on: ubuntu-latest
+    # Use a GitHub Environment so the publish profile / deploy is gated
+    # behind the env's protection rules (manual approval, branch policy).
+    environment:
+      name: azure-production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install (with dev deps for the build step)
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Strip dev deps so the artifact uploaded to Azure is the smallest
+      # thing that still runs `node index.mjs`. The remix build output
+      # ends up at ./build/, which is included by default.
+      - name: Prune dev dependencies
+        run: npm prune --omit=dev
+
+      - name: Deploy to Azure Web App
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          # Whole repo (post-build, post-prune). Files like .git/, tests, and
+          # docs ride along — that's fine for a small app, and skipping them
+          # would mean fragile include lists.
+          package: .
