@@ -45,8 +45,8 @@ const _ALLOWED_PROVIDERS: ReadonlySet<AuthProviderId> = new Set([
   "google",
 ]);
 
-/** SQLite filename, resolved relative to `process.cwd()`. */
-const _DB_FILENAME = "otp.db";
+/** Default SQLite filename, used when `OTP_DB_PATH` is unset. */
+const _DEFAULT_DB_FILENAME = "otp.db";
 
 /**
  * Strict-allowlist sanitizer for the email portion of the vault key.
@@ -95,8 +95,23 @@ const _connections = new Map<string, DatabaseSync>();
  */
 const _migratedUserIds = new Set<string>();
 
+/**
+ * Resolve where the SQLite file should live.
+ *
+ * Priority:
+ *   1. `OTP_DB_PATH` env var. Absolute path is used as-is; relative paths
+ *      are resolved against `process.cwd()`. This is the knob deployments
+ *      use to point at a persisted volume — e.g. on Azure App Service Linux,
+ *      `OTP_DB_PATH=/home/site/data/otp.db` so the database survives slot
+ *      swaps and restarts.
+ *   2. `${cwd}/otp.db` for development and tests.
+ */
 function _resolveDbPath(): string {
-  return path.resolve(process.cwd(), _DB_FILENAME);
+  const fromEnv = process.env.OTP_DB_PATH;
+  if (fromEnv && fromEnv.trim()) {
+    return path.resolve(process.cwd(), fromEnv.trim());
+  }
+  return path.resolve(process.cwd(), _DEFAULT_DB_FILENAME);
 }
 
 function _initSchema(db: DatabaseSync): void {
@@ -118,6 +133,10 @@ function _getDb(): DatabaseSync {
   const dbPath = _resolveDbPath();
   let db = _connections.get(dbPath);
   if (!db) {
+    // Materialize the parent directory so a fresh deploy with an
+    // OTP_DB_PATH that doesn't exist yet (e.g. /home/site/data/otp.db on a
+    // brand-new Azure App Service) doesn't blow up at SQLite open time.
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     db = new DatabaseSync(dbPath);
     _initSchema(db);
     _connections.set(dbPath, db);

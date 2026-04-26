@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
   _resetForTests,
@@ -495,6 +495,58 @@ describe("OtpIdentityDAO", () => {
       expect(getOtpIdentityResponse(MS_KEY).items.map((i) => i.name)).toEqual([
         "Mine",
       ]);
+    });
+  });
+
+  describe("OTP_DB_PATH env override", () => {
+    afterEach(() => vi.unstubAllEnvs());
+
+    test("uses an absolute OTP_DB_PATH as-is", async () => {
+      const customDir = fs.mkdtempSync(path.join(tmpDir, "custom-"));
+      const customDb = path.join(customDir, "vault.sqlite");
+      vi.stubEnv("OTP_DB_PATH", customDb);
+      // Drop the connection cached under the default `otp.db` path so the
+      // next call observes the new env var.
+      _resetForTests();
+
+      await createOtpIdentity(MS_KEY, {
+        name: "Custom",
+        login: { totp: "otpauth://x" },
+      });
+
+      expect(fs.existsSync(customDb)).toBe(true);
+      // Default `otp.db` should not have been created in cwd.
+      expect(fs.existsSync(path.join(tmpDir, "otp.db"))).toBe(false);
+      expect(getOtpIdentityResponse(MS_KEY).items.map((i) => i.name)).toEqual([
+        "Custom",
+      ]);
+    });
+
+    test("creates the parent directory when it does not yet exist", async () => {
+      // Simulates a brand-new Azure App Service where /home/site/data does
+      // not yet exist on first boot.
+      const nestedDb = path.join(tmpDir, "nested", "deeper", "otp.db");
+      vi.stubEnv("OTP_DB_PATH", nestedDb);
+      _resetForTests();
+
+      await createOtpIdentity(MS_KEY, {
+        name: "Nested",
+        login: { totp: "otpauth://x" },
+      });
+
+      expect(fs.existsSync(nestedDb)).toBe(true);
+    });
+
+    test("falls back to cwd/otp.db when OTP_DB_PATH is empty", async () => {
+      vi.stubEnv("OTP_DB_PATH", "   ");
+      _resetForTests();
+
+      await createOtpIdentity(MS_KEY, {
+        name: "Default",
+        login: { totp: "otpauth://x" },
+      });
+
+      expect(fs.existsSync(path.join(tmpDir, "otp.db"))).toBe(true);
     });
   });
 
