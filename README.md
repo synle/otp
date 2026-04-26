@@ -96,8 +96,9 @@ npm start
 There's a manual GitHub Action that ships the app to **Azure App Service for
 Linux** running Node 24:
 [`.github/workflows/deploy-azure.yml`](./.github/workflows/deploy-azure.yml).
-It runs `npm ci`, `npm run build`, prunes dev deps, and uploads the result
-via `azure/webapps-deploy@v3`.
+It runs `npm ci`, `npm run test-ci`, `npm run build`, prunes dev deps, zips
+the artifact (excluding `.git/`, `.github/`, `coverage/`, and any local
+`.env*` files), and uploads the result via `azure/webapps-deploy@v3`.
 
 Trigger it from the GitHub UI (**Actions → deploy-azure → Run workflow**) or
 with `gh workflow run deploy-azure.yml`. Auto-deploy on tag push is wired
