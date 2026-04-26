@@ -1,9 +1,18 @@
 import { Typography, Link, Button, Skeleton } from "@mui/material";
 import { toast } from "react-toastify";
 
+/**
+ * Big monospace label that shows the current TOTP code (or a loading
+ * skeleton). Clicking it copies the code to the clipboard via the legacy
+ * `execCommand` API (chosen for broad compatibility, including over plain HTTP).
+ */
 export default function (props: { data?: string; isLoading?: boolean }) {
   const { data, isLoading } = props;
 
+  /**
+   * Copy `text` to the clipboard using a hidden textarea + `execCommand`.
+   * Toasts on success. No-op when `text` is falsy.
+   */
   const onCopyToClipboard = (text?: string) => {
     if (!text) {
       return;

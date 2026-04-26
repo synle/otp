@@ -37,9 +37,15 @@ import {
 } from "@mui/material/colors";
 
 type BrandIconProp = {
+  /** Free-form identity name; matched case-insensitively against `ICON_MAPPINGS` keys. */
   icon: string;
 };
 
+/**
+ * Brand-name -> FontAwesome icon mapping. Keys are matched as case-insensitive
+ * substrings, so e.g. an identity named "Github (work)" resolves to the
+ * Github icon.
+ */
 const ICON_MAPPINGS = {
   Google: faGoogle,
   Microsoft: faMicrosoft,
@@ -97,6 +103,11 @@ for (const brandKey of Object.keys(ICON_MAPPINGS)) {
   }
 }
 
+/**
+ * Render a colored FontAwesome icon for an identity name.
+ *
+ * Falls back to a generic user icon + green tint when no brand keyword matches.
+ */
 export default function BrandIcon(props: BrandIconProp) {
   const { icon } = props;
 

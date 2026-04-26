@@ -7,6 +7,17 @@ import {
   confidentialClientApplication,
 } from "~/utils/backend/SSO";
 
+/**
+ * GET `/api/auth/login` - kick off the AAD authorization-code flow.
+ *
+ * Computes the redirect URI in this priority order:
+ *   1. `BASE_API_HOST` (set via `AAD_SSO_BASE_HOST_URL`)
+ *   2. `AAD_REDIRECT_URL` env var (per-deployment override)
+ *   3. The current request URL, upgraded to https unless it's localhost
+ *
+ * Then 302-redirects the user to AAD's auth code URL with `responseMode=form_post`
+ * so the callback comes back as a POST (handled in `api.auth.login_callback.ts`).
+ */
 export async function loader(args: LoaderArgs) {
   const { request } = args;
 

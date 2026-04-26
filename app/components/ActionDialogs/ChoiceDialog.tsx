@@ -5,13 +5,26 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 
+/**
+ * One selectable row in a choice dialog.
+ */
 export type ChoiceOption = {
+  /** Optional icon rendered before the label. */
   startIcon?: JSX.Element;
+  /** Visible row label. */
   label: JSX.Element | string;
+  /** Value passed back to `onSelect` when the row is clicked. */
   value: string;
+  /** When true the row is shown but cannot be selected. */
   disabled?: boolean;
 };
 
+/**
+ * Caller-supplied options for a choice dialog.
+ *
+ * `required: true` removes the backdrop dismiss path so the user has to pick
+ * an option before the dialog can close.
+ */
 export type ChoiceInput = {
   title: string;
   message: JSX.Element | string;
@@ -25,6 +38,10 @@ type ChoiceDialogProps = ChoiceInput & {
   onDismiss: () => void;
 };
 
+/**
+ * Presentational dialog that lists `options` and reports the selection via
+ * `onSelect`. Used by `useActionDialogs().choice(...)`.
+ */
 export default function ChoiceDialog(
   props: ChoiceDialogProps
 ): JSX.Element | null {

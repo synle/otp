@@ -4,6 +4,14 @@ import type { User } from "~/types.d.ts";
 import { getOtpIdentityResponse } from "~/utils/backend/OtpIdentityDAO";
 import { getSession } from "~/utils/backend/Session";
 
+/**
+ * GET `/api/otp` - return the authenticated user's full identity list.
+ *
+ * Responses:
+ *   - 200 with `OtpIdentityResponse` JSON when the session has a `mail` claim.
+ *   - 401 when the request has no valid session / no `mail`.
+ *   - 500 on any unexpected failure reading the persisted file.
+ */
 export async function loader(args: LoaderArgs) {
   const { request } = args;
   try {

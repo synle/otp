@@ -8,14 +8,23 @@ import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import React, { useState } from "react";
 
+/**
+ * Caller-supplied options for a prompt (text-input) dialog.
+ */
 export type PromptInput = {
   title?: string;
+  /** Field label rendered inside the text input. */
   message: string;
+  /** Initial value to pre-fill. */
   value?: string;
+  /** When true, render a multiline textarea sized to `lg` instead of `sm`. */
   isLongPrompt?: boolean;
   saveLabel?: string;
+  /** Reserved for callers that mount a code editor; currently unused by the dialog. */
   languageMode?: string;
+  /** When true the user cannot dismiss the dialog without entering a value. */
   required?: boolean;
+  /** When true the action row is hidden so the dialog acts as a viewer. */
   readonly?: boolean;
 };
 
@@ -25,6 +34,12 @@ type PromptDialogProps = PromptInput & {
   onDismiss: () => void;
 };
 
+/**
+ * Presentational dialog wrapping a single text input.
+ *
+ * State is kept locally in this component (not lifted) - on Save it forwards
+ * the trimmed value via `onSaveClick`.
+ */
 export default function PromptDialog(
   props: PromptDialogProps
 ): JSX.Element | null {

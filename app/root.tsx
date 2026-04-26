@@ -31,15 +31,8 @@ import { ActionDialogsContext } from 'react-dialog-mui';
 import { QueryClient, QueryClientProvider } from "react-query";
 import Loading from "~/components/Loading";
 import { NewOtpButton } from "~/components/TileList";
+import { getInitials } from "~/utils/frontend/getInitials";
 import { useMeProfile } from "~/utils/frontend/hooks/Auth";
-
-function _getInitials(fullName: string) {
-  const names = fullName.split(" ");
-  return names
-    .map((name) => name.charAt(0))
-    .join("")
-    .toUpperCase();
-}
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -67,6 +60,14 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Top-level app shell.
+ *
+ * Three render branches:
+ *   - `isLoading`  -> spinner
+ *   - no profile   -> login prompt
+ *   - signed in    -> AppBar + `<Outlet />` for the active route
+ */
 function App() {
   const { data: profile, isLoading } = useMeProfile();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -134,7 +135,7 @@ function App() {
                 aria-haspopup="true"
                 onClick={(event) => setAnchorEl(event.currentTarget)}
               >
-                <Avatar>{_getInitials(fullName)}</Avatar>
+                <Avatar>{getInitials(fullName)}</Avatar>
               </IconButton>
               <Menu
                 id="current-user-profile-menu"
@@ -171,6 +172,11 @@ function App() {
   );
 }
 
+/**
+ * Composes the global providers (react-query, MUI theme, dialog context) in
+ * a single tree and gates the children on a one-frame `init` flag so that
+ * MUI styles attach before children mount (avoids a hydration flash).
+ */
 function AppContextReducer(props: { children: JSX.Element | JSX.Element[] }) {
   const contexts = [ActionDialogsContext];
 
@@ -208,6 +214,10 @@ function AppContextReducer(props: { children: JSX.Element | JSX.Element[] }) {
   );
 }
 
+/**
+ * Remix root layout. Renders the HTML scaffold (head, body, scripts) and
+ * mounts the app inside the global providers.
+ */
 export default function () {
   return (
     <html lang="en">

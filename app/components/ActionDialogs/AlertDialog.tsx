@@ -5,6 +5,12 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { Box } from "@mui/material";
 
+/**
+ * Caller-supplied options for an alert / confirm dialog.
+ *
+ * When `isConfirm` is true the dialog renders a Yes/No pair; otherwise a
+ * single OK button is shown.
+ */
 export type AlertInput = {
   title?: string;
   message: string | JSX.Element;
@@ -19,6 +25,11 @@ type AlertDialogProps = AlertInput & {
   onDismiss: () => void;
 };
 
+/**
+ * Presentational MUI `<Dialog>` for alerts and confirmations.
+ * Logic-free - state and submit/dismiss callbacks are provided by the
+ * `useActionDialogs` hook.
+ */
 export default function AlertDialog(
   props: AlertDialogProps
 ): JSX.Element | null {

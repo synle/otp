@@ -8,6 +8,17 @@ import {
 } from "~/utils/backend/OtpIdentityDAO";
 import { getSession } from "~/utils/backend/Session";
 
+/**
+ * Action handler for `/api/otp/:id` - all mutating operations on the user's
+ * identity list are routed through here.
+ *
+ * Method matrix:
+ *   - PUT    -> update the identity matching `:id`
+ *   - POST   -> create a new identity (the `:id` segment is ignored, e.g. `/api/otp/new`)
+ *   - DELETE -> remove the identity matching `:id`
+ *
+ * Returns 401 when the session has no `mail` claim.
+ */
 export async function action(args: ActionArgs) {
   const { request, params } = args;
   const id = params.id || "";

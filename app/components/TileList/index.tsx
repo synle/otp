@@ -25,9 +25,15 @@ import { useOtpIdentityList } from "~/utils/frontend/hooks/OtpIdentity";
 
 const DEFAULT_SORTING_OPTION = "name-asc";
 
+/**
+ * Button rendered in the app bar that opens the "New OTP" modal.
+ * Lives in the TileList module so the modal lifecycle stays adjacent to the
+ * list it ultimately mutates.
+ */
 export function NewOtpButton() {
   const { modal } = useActionDialogs();
 
+  /** Open the create-OTP modal hosted by `useActionDialogs`. */
   const onCreateNewOtp = () => {
     modal({
       showCloseButton: true,
@@ -44,6 +50,17 @@ export function NewOtpButton() {
   );
 }
 
+/**
+ * Top-level identity grid.
+ *
+ * Responsibilities:
+ *   - Fetch the identity list via `useOtpIdentityList`
+ *   - Filter by the search query and sort by the chosen criterion
+ *   - Sync the (q, sortingOption, showQrCode) state into the URL search
+ *     params so reloads / sharing preserve the view
+ *   - Render either an `<Alert>` for empty states or a responsive grid of
+ *     `<TileItem>`s
+ */
 export default function () {
   const navigate = useNavigate();
 

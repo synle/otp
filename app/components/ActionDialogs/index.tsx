@@ -7,6 +7,13 @@ import { useActionDialogs } from "~/utils/frontend/hooks/ActionDialogs";
 
 type ActionDialogsProps = {};
 
+/**
+ * Renders every dialog currently in the `useActionDialogs` stack.
+ *
+ * Acts as the bridge between the imperative `prompt/confirm/...` API and the
+ * declarative dialog components - it picks the right component for each
+ * descriptor's `type` and wires up the submit/dismiss callbacks.
+ */
 export default function ActionDialogs(
   props: ActionDialogsProps
 ): JSX.Element | null {

@@ -11,11 +11,23 @@ import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 import EditOtpForm from "~/components/TileItem/EditOtpForm";
 import BrandIcon from "~/components/TileItem/BrandIcon";
 
+/**
+ * Props for the per-identity tile.
+ */
 export type TileItemProps = {
+  /** When true, render the QR code instead of the rolling 6-digit code. */
   showQrCode: boolean;
+  /** The identity to render. */
   item: OtpIdentity;
 };
 
+/**
+ * One tile in the identity grid.
+ *
+ * Owns the QR-code data URL (lazily generated from the otpauth URI) and wires
+ * up the edit / delete affordances. The actual TOTP code is fetched via
+ * `useOtpCode` so it auto-refreshes every 5s.
+ */
 export default function (props: TileItemProps) {
   const { item, showQrCode } = props;
   const { data, isLoading } = useOtpCode(item.login.totp);

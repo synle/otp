@@ -3,6 +3,12 @@ import axios from "axios";
 import { commitSession, getSession } from "~/utils/backend/Session";
 import { SCOPE, confidentialClientApplication } from "~/utils/backend/SSO";
 
+/**
+ * Fetch the user profile from Microsoft Graph `/me` using a bearer access token.
+ *
+ * @param accessToken - Access token obtained from `acquireTokenByCode`.
+ * @returns The Graph `/me` profile object (typed loosely as the route does no validation).
+ */
 async function _getUserInformation(accessToken: string) {
   // do the me api to get profile
   const { data: aadMeProfile } = await axios.get(
@@ -18,6 +24,16 @@ async function _getUserInformation(accessToken: string) {
   return aadMeProfile;
 }
 
+/**
+ * POST `/api/auth/login_callback` - AAD posts the auth code here (because
+ * `responseMode=form_post` was used at the login step).
+ *
+ * Steps:
+ *   1. Redeem the auth code for an access token
+ *   2. Call Graph `/me` to fetch the user profile
+ *   3. Persist `access_token` + `user` in the session cookie
+ *   4. Redirect back to `/`
+ */
 export let action: ActionFunction = async ({ request }) => {
   const formData = new URLSearchParams(await request.text());
 

@@ -4,6 +4,20 @@ import { authenticator } from "otplib";
 import type { User } from "~/types.d.ts";
 import { getSession } from "~/utils/backend/Session";
 
+/**
+ * POST `/api/otp_code` - given an `otpauth://...` URI in the body, return the
+ * current 6-digit TOTP code for it.
+ *
+ * The URI's `secret` query param is fed to `otplib.authenticator.generate`.
+ * The body field is intentionally named `tolp` to match the matching typo in
+ * the frontend hook (`useOtpCode`); both sides must change together.
+ *
+ * Responses:
+ *   - 200 with the code as the body
+ *   - 400 when `tolp` is missing or the URI has no `secret`
+ *   - 401 on missing session
+ *   - 500 on unexpected failure
+ */
 export async function action(args: ActionArgs) {
   const { request } = args;
 

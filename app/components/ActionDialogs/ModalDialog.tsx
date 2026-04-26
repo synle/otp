@@ -5,15 +5,19 @@ import DialogTitle from "@mui/material/DialogTitle";
 import IconButton from "@mui/material/IconButton";
 import { Box } from "@mui/material";
 
+/**
+ * Caller-supplied options for a generic modal.
+ */
 export type ModalInput = {
+  /** Title shown in the dialog header. */
   title: string;
-  /**
-   * body of the modal
-   * @type {[type]}
-   */
+  /** Modal body. Any React node; the caller owns the layout inside it. */
   message: JSX.Element;
+  /** Show the X icon button in the header. */
   showCloseButton?: boolean;
+  /** When true, clicking the backdrop does *not* close the modal. */
   disableBackdropClick?: boolean;
+  /** Maps to MUI Dialog `maxWidth`. */
   size: "xs" | "sm" | "md" | "lg";
 };
 
@@ -22,6 +26,10 @@ type ModalProps = ModalInput & {
   onDismiss: () => void;
 };
 
+/**
+ * Generic modal shell used by `useActionDialogs().modal(...)` to host
+ * arbitrary React subtrees (forms, scanners, etc.).
+ */
 export default function Modal(props: ModalProps): JSX.Element | null {
   const onBackdropClick = () => {
     if (props.disableBackdropClick !== true) {

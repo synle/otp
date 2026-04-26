@@ -7,6 +7,13 @@ import { useUpdateOtpIdentity } from "~/utils/frontend/hooks/OtpIdentity";
 import TotpTextfield from "~/components/TileItem/TotpTextfield";
 import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 
+/**
+ * Edit form rendered inside the "Edit OTP" modal.
+ *
+ * Submits via `useUpdateOtpIdentity` and closes the dialog on success.
+ * The QR code shown here is regenerated upstream in `<TileItem>` so we just
+ * receive it as a prop.
+ */
 export default function (props: { item: OtpIdentity; qrCode: string }) {
   const { item, qrCode } = props;
   const { dismiss } = useActionDialogs();

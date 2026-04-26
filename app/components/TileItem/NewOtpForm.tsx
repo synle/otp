@@ -17,6 +17,13 @@ import OtpCodeLabel from "~/components/TileItem/OtpCodeLabel";
 import TotpTextfield from "~/components/TileItem/TotpTextfield";
 import { useCreateOtpIdentity, useOtpCode } from "~/utils/frontend/hooks/OtpIdentity";
 
+/**
+ * Live camera view that scans QR codes via the global `Instascan` script
+ * loaded in `root.tsx`. Calls `onScan` once the scanned content matches an
+ * `otpauth://totp/` URI.
+ *
+ * Sorts cameras with "back"/"rear" first so phones default to the rear camera.
+ */
 function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
   const myDivRef = useRef(null);
   const { onScan } = props;
@@ -134,6 +141,12 @@ function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
   );
 }
 
+/**
+ * "New OTP" form rendered inside the create-OTP modal.
+ *
+ * Either accepts manual entry of (name, otpauth URI) or opens the QR scanner
+ * which auto-fills both fields from a scanned `otpauth://totp/...` URI.
+ */
 export default function () {
   const { modal, dismiss } = useActionDialogs();
   const [name, setName] = useState("");
