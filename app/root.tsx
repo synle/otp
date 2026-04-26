@@ -98,9 +98,24 @@ function App() {
           <Typography sx={{ marginBottom: 4 }}>
             You are not authenticated, please log in to continue.
           </Typography>
-          <Box>
-            <Button variant="contained" component={Link} href="/api/auth/login">
-              Log in
+          <Typography variant="body2" sx={{ marginBottom: 2, opacity: 0.7 }}>
+            Microsoft and Google accounts have separate vaults — pick one
+            and stick with it.
+          </Typography>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button
+              variant="contained"
+              component={Link}
+              href="/api/auth/microsoft/login"
+            >
+              Log in with Microsoft
+            </Button>
+            <Button
+              variant="outlined"
+              component={Link}
+              href="/api/auth/google/login"
+            >
+              Log in with Google
             </Button>
           </Box>
         </Paper>

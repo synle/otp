@@ -23,13 +23,18 @@ import BrandIcon from "~/components/TileItem/BrandIcon";
 /**
  * Render `<BrandIcon icon={name} />` and read back the (icon-name, color)
  * pair that the component decided to use.
+ *
+ * Queries via `container.querySelector` rather than the bound `getByTestId`
+ * so this stays correct when a single test calls it multiple times — the
+ * top-level queries are bound to `document.body`, which accumulates across
+ * renders inside the same test.
  */
 function resolveBrand(name: string): { iconName: string; color: string } {
-  const { getByTestId } = render(<BrandIcon icon={name} />);
-  const node = getByTestId("fa-icon");
+  const { container } = render(<BrandIcon icon={name} />);
+  const node = container.querySelector('[data-testid="fa-icon"]');
   return {
-    iconName: node.getAttribute("data-icon-name") || "",
-    color: node.getAttribute("data-color") || "",
+    iconName: node?.getAttribute("data-icon-name") || "",
+    color: node?.getAttribute("data-color") || "",
   };
 }
 

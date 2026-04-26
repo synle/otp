@@ -1,0 +1,91 @@
+name: deploy-azure
+
+# Build and deploy to Azure App Service (Linux, Node 24).
+#
+# Manual-only by default. A personal OTP manager is generally happier with
+# explicit "Run workflow" releases — flip on the `push` trigger below if you
+# want every main commit to ship.
+#
+# Required GitHub Actions secrets (defined on the `azure-production`
+# Environment so the env's protection rules — manual approval, branch
+# policy — gate every deploy):
+#   - AZURE_WEBAPP_NAME            : the App Service name (e.g. "otp-yourname")
+#   - AZURE_WEBAPP_PUBLISH_PROFILE : full XML from
+#       `az webapp deployment list-publishing-profiles --xml`
+#
+# Application settings (SESSION_SECRET, AAD_SSO_*, GOOGLE_OAUTH_*,
+# OTP_DB_PATH, etc.) live on the App Service itself, NOT here — see
+# README → "How to deploy to Azure".
+
+on:
+  workflow_dispatch:
+  # push:
+  #   tags: ["v*"]
+
+# Don't pile up deploys if multiple triggers fire in quick succession;
+# let the latest win.
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24.x"
+
+jobs:
+  deploy:
+    name: Deploy to Azure App Service (Linux)
+    runs-on: ubuntu-latest
+    # Use a GitHub Environment so the publish profile / deploy is gated
+    # behind the env's protection rules (manual approval, branch policy).
+    environment:
+      name: azure-production
+      url: ${{ steps.deploy.outputs.webapp-url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install (with dev deps for the build + test steps)
+        run: npm ci
+
+      - name: Run tests
+        # Fail fast if anything regresses before we ship to Azure.
+        run: npm run test-ci
+
+      - name: Build
+        run: npm run build
+
+      # Strip dev deps so the artifact uploaded to Azure is the smallest
+      # thing that still runs `node index.mjs`. The remix build output
+      # ends up at ./build/, which is included by default.
+      - name: Prune dev dependencies
+        run: npm prune --omit=dev
+
+      - name: Package artifact
+        # Bundle source + build output + production node_modules into a zip.
+        # Explicit excludes keep .git history, CI files, coverage reports,
+        # and any local .env out of the deployed artifact.
+        run: |
+          zip -r release.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "coverage/*" \
+            -x "*.env" \
+            -x ".env*"
+
+      - name: Deploy to Azure Web App
+        id: deploy
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: release.zip
