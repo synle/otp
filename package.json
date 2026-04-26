@@ -6,7 +6,10 @@
     "dev": "remix dev",
     "start": "node index.mjs",
     "typecheck": "tsc",
-    "format": "npx prettier . --write"
+    "format": "npx prettier . --write",
+    "test": "vitest --watch",
+    "test-ci": "vitest run --coverage",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@azure/msal-node": "^2.1.0",
@@ -40,8 +43,10 @@
     "@remix-run/eslint-config": "^1.19.3",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
+    "@vitest/coverage-v8": "^4.1.4",
     "eslint": "^8.38.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "vitest": "^4.1.4"
   },
   "engines": {
     "node": ">=14.0.0"

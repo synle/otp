@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "checkJs": false,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./app/*"]
+    }
+  },
+  "include": ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"],
+  "exclude": ["node_modules", "build", "public/build", ".cache", "coverage"]
+}
