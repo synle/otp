@@ -44,7 +44,7 @@ docs (what the app does, how to deploy it) see [`README.md`](./README.md).
 
 ## Prerequisites
 
-- Node 18+ (the CI workflow pins Node 24).
+- Node 24+ (CI also pins 24.x; an `.nvmrc` is checked in for `nvm use`).
 - An OAuth client from at least one provider so the SSO flow can actually
   log you in. Without one the app boots, but `useMeProfile` returns 401 and
   you'll see the login splash. See `app/utils/backend/auth/microsoft.ts`
