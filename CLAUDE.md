@@ -33,12 +33,14 @@ in `app/utils/backend/auth/` or the `api.auth.*` routes:
   `{ id, email, displayName, provider }`. Anything Graph-shaped or
   Google-shaped lives behind the adapter and never escapes into routes /
   frontend.
-- **Vaults are namespaced per provider.** The on-disk file is
-  `<sanitized-email>-<provider>.cred.json`. The same email logging in via
-  Microsoft vs Google sees two independent vaults — by design (no email-
-  verification trust required, no cross-provider takeover possible).
-  Pre-existing `<email>.cred.json` files are auto-migrated to
-  `<email>-microsoft.cred.json` on first read for a Microsoft user.
+- **Vaults are namespaced per provider.** Identities live in `otp.db`
+  (SQLite via Node's built-in `node:sqlite`); rows carry a `user_id`
+  column of `<sanitized-email>-<provider>`. Same email + different
+  providers ⇒ two independent vaults — by design (no email-verification
+  trust required, no cross-provider takeover possible). Pre-existing
+  JSON files (`<email>.cred.json` legacy or `<email>-<provider>.cred.json`
+  Phase-1) are auto-imported on first read and the file is renamed with
+  a `.migrated` suffix.
 - **OAuth state nonce.** The login route mints a random nonce, signs it into
   a short-lived `__auth_state` cookie alongside the providerId and
   redirectUri, and the callback rejects mismatches. This is the login-CSRF

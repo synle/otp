@@ -25,7 +25,7 @@ docs (what the app does, how to deploy it) see [`README.md`](./README.md).
 │   │   └── api.otp_code.ts # Generate the rolling 6-digit code
 │   ├── utils/
 │   │   ├── backend/
-│   │   │   ├── OtpIdentityDAO.ts  # File-backed vault keyed by <email>-<provider>
+│   │   │   ├── OtpIdentityDAO.ts  # SQLite-backed vault keyed by <email>-<provider>
 │   │   │   ├── Session.ts         # Cookie session + secret resolution
 │   │   │   └── auth/              # Pluggable SSO provider adapters
 │   │   │       ├── types.ts       # AuthProvider interface
@@ -113,7 +113,8 @@ npm run coverage       # alias of test-ci; output in ./coverage
 ### What's currently covered
 
 - `app/utils/backend/OtpIdentityDAO.ts` — full CRUD + lifecycle, sanitizer,
-  legacy migration, provider isolation.
+  JSON-vault → SQLite migration (both the legacy and Phase-1 layouts),
+  provider isolation, cross-user authorization.
 - `app/utils/backend/Session.ts` — secret resolution policy.
 - `app/utils/backend/auth/state.ts` — nonce round trip, tampering, cross-
   provider mismatch, missing cookie.
@@ -182,11 +183,15 @@ Because we expose `npm run test-ci`, CI runs it automatically with coverage.
 - **Imperative dialogs**: open modals/prompts via the
   `useActionDialogs()` hook, not by mounting `<Dialog>` directly. The hook
   manages a stack so nested dialogs work.
-- **Persistence**: identities are stored in
-  `<sanitized-email>-<provider>.cred.json` in the process CWD. There's no DB.
-  Two providers ⇒ two vaults for the same human; this is intentional.
-  Pre-multi-provider files (`<email>.cred.json`) are auto-migrated to the
-  Microsoft variant on first read.
+- **Persistence**: identities live in `otp.db`, a SQLite database opened
+  via Node's built-in `node:sqlite` (no extra deps), in the process CWD.
+  Rows are namespaced by a `user_id` column of `<sanitized-email>-<provider>`
+  so the same human's Microsoft and Google logins map to independent
+  vaults. Pre-existing JSON vaults (both the post-Phase-1
+  `<email>-<provider>.cred.json` and the legacy `<email>.cred.json`) are
+  auto-imported on first read for that user and then renamed with a
+  `.migrated` suffix. The original is left on disk for audit, never
+  deleted.
 - **The `tolp` field name** in `api.otp_code.ts` and the `useOtpCode` hook is
   a typo that's consistent on both sides — change them together if you want
   to fix it, otherwise leave it alone.

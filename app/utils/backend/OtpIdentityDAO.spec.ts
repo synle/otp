@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import {
+  _resetForTests,
   createOtpIdentity,
   deleteOtpIdentity,
   getOtpIdentityResponse,
@@ -14,19 +15,20 @@ import {
 } from "~/utils/backend/OtpIdentityDAO";
 
 /**
- * The DAO writes `${email}-${provider}.cred.json` relative to the current
- * working directory. Each test runs inside a fresh tmpdir so the on-disk
- * side effects stay isolated from the repo and from other tests.
+ * The DAO opens an `otp.db` SQLite file relative to `process.cwd()`. Each
+ * test gets a fresh tmpdir so connections, schemas, and on-disk state are
+ * fully isolated. `_resetForTests` drops cached connections from the prior
+ * tmpdir so we don't leak file descriptors across tests.
  */
 describe("OtpIdentityDAO", () => {
   const TEST_EMAIL = "tester@example.com";
   const MS_KEY: UserKey = { email: TEST_EMAIL, provider: "microsoft" };
   const GOOGLE_KEY: UserKey = { email: TEST_EMAIL, provider: "google" };
 
-  // Filename helpers — kept inline so the assertions read alongside the layout.
-  const msFile = `${TEST_EMAIL}-microsoft.cred.json`;
-  const googleFile = `${TEST_EMAIL}-google.cred.json`;
-  const legacyFile = `${TEST_EMAIL}.cred.json`;
+  // Pre-multi-provider layout used a single per-email file; post-Phase-1
+  // layout namespaces by provider. SQLite migration accepts both.
+  const newLayoutFile = `${TEST_EMAIL}-microsoft.cred.json`;
+  const legacyLayoutFile = `${TEST_EMAIL}.cred.json`;
 
   let originalCwd: string;
   let tmpDir: string;
@@ -38,6 +40,7 @@ describe("OtpIdentityDAO", () => {
   });
 
   afterEach(() => {
+    _resetForTests();
     process.chdir(originalCwd);
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
@@ -55,8 +58,7 @@ describe("OtpIdentityDAO", () => {
       expect(() => sanitizeEmailForFilename("")).toThrow();
     });
 
-    test("strips path separators so the email cannot escape cwd", () => {
-      // a malicious email like ../etc/passwd@x must not write outside cwd
+    test("strips path separators so the email cannot escape cwd at migration time", () => {
       expect(sanitizeEmailForFilename("../etc/passwd@x.com")).toBe(
         ".._etc_passwd@x.com"
       );
@@ -75,46 +77,14 @@ describe("OtpIdentityDAO", () => {
   });
 
   describe("getOtpIdentityResponse", () => {
-    test("returns an empty list when no file exists", () => {
+    test("returns an empty list for a brand-new user", () => {
       expect(getOtpIdentityResponse(MS_KEY)).toEqual({ items: [] });
     });
 
-    test("returns parsed contents when the file exists", () => {
-      const seeded: OtpIdentityResponse = {
-        items: [
-          { id: "abc-123", name: "Github", login: { totp: "otpauth://totp/x" } },
-        ],
-      };
-      fs.writeFileSync(msFile, JSON.stringify(seeded));
-
-      expect(getOtpIdentityResponse(MS_KEY)).toEqual(seeded);
-    });
-
-    test("returns an empty list when the file is corrupted JSON", () => {
-      // Don't surface a parse error to the route layer; the DAO is supposed
-      // to swallow it and return an empty list so the user can re-create.
-      fs.writeFileSync(msFile, "not-json{{{");
-      expect(getOtpIdentityResponse(MS_KEY)).toEqual({ items: [] });
-    });
-
-    test("namespaces by email so two users do not see each other's data", () => {
-      fs.writeFileSync(
-        `a@example.com-microsoft.cred.json`,
-        JSON.stringify({ items: [{ id: "1", name: "A", login: { totp: "x" } }] })
-      );
-      fs.writeFileSync(
-        `b@example.com-microsoft.cred.json`,
-        JSON.stringify({ items: [{ id: "2", name: "B", login: { totp: "y" } }] })
-      );
-
-      expect(
-        getOtpIdentityResponse({ email: "a@example.com", provider: "microsoft" })
-          .items[0].name
-      ).toBe("A");
-      expect(
-        getOtpIdentityResponse({ email: "b@example.com", provider: "microsoft" })
-          .items[0].name
-      ).toBe("B");
+    test("creates the otp.db file lazily on first access", () => {
+      expect(fs.existsSync(path.join(tmpDir, "otp.db"))).toBe(false);
+      getOtpIdentityResponse(MS_KEY);
+      expect(fs.existsSync(path.join(tmpDir, "otp.db"))).toBe(true);
     });
 
     test("namespaces by provider so microsoft and google vaults are independent", async () => {
@@ -135,6 +105,28 @@ describe("OtpIdentityDAO", () => {
       ).toEqual(["Google only"]);
     });
 
+    test("namespaces by email so two users do not see each other's data", async () => {
+      await createOtpIdentity(
+        { email: "a@example.com", provider: "microsoft" },
+        { name: "A", login: { totp: "otpauth://totp/A" } }
+      );
+      await createOtpIdentity(
+        { email: "b@example.com", provider: "microsoft" },
+        { name: "B", login: { totp: "otpauth://totp/B" } }
+      );
+
+      const a = getOtpIdentityResponse({
+        email: "a@example.com",
+        provider: "microsoft",
+      });
+      const b = getOtpIdentityResponse({
+        email: "b@example.com",
+        provider: "microsoft",
+      });
+      expect(a.items.map((i) => i.name)).toEqual(["A"]);
+      expect(b.items.map((i) => i.name)).toEqual(["B"]);
+    });
+
     test("is case-insensitive on the email so MIXED@x and mixed@x share a vault", async () => {
       await createOtpIdentity(
         { email: "MiXeD@x.com", provider: "microsoft" },
@@ -146,63 +138,136 @@ describe("OtpIdentityDAO", () => {
       });
       expect(lower.items.map((i) => i.name)).toEqual(["A"]);
     });
+
+    test("orders identities by created_at then id", async () => {
+      await createOtpIdentity(MS_KEY, {
+        name: "First",
+        login: { totp: "otpauth://1" },
+      });
+      // Force a different timestamp so created_at comparison is well-defined.
+      await new Promise((r) => setTimeout(r, 5));
+      await createOtpIdentity(MS_KEY, {
+        name: "Second",
+        login: { totp: "otpauth://2" },
+      });
+      expect(
+        getOtpIdentityResponse(MS_KEY).items.map((i) => i.name)
+      ).toEqual(["First", "Second"]);
+    });
   });
 
-  describe("legacy vault migration", () => {
-    test("renames `${email}.cred.json` to the new microsoft path on first read", () => {
+  describe("JSON vault migration", () => {
+    test("imports a Phase-1 <email>-<provider>.cred.json file on first read", () => {
+      const seeded: OtpIdentityResponse = {
+        items: [
+          {
+            id: "json-1",
+            name: "FromJson",
+            login: { totp: "otpauth://totp/FromJson" },
+          },
+        ],
+      };
+      fs.writeFileSync(newLayoutFile, JSON.stringify(seeded));
+
+      const response = getOtpIdentityResponse(MS_KEY);
+
+      expect(response.items.map((i) => i.name)).toEqual(["FromJson"]);
+      // Original file is preserved with a .migrated suffix so the operator
+      // can verify the import before the file is finally removed.
+      expect(fs.existsSync(newLayoutFile)).toBe(false);
+      expect(fs.existsSync(`${newLayoutFile}.migrated`)).toBe(true);
+    });
+
+    test("imports a pre-multi-provider <email>.cred.json for the microsoft provider", () => {
       const seeded: OtpIdentityResponse = {
         items: [
           {
             id: "legacy-1",
-            name: "Legacy",
+            name: "LegacyOnly",
             login: { totp: "otpauth://totp/Legacy" },
           },
         ],
       };
-      fs.writeFileSync(legacyFile, JSON.stringify(seeded));
+      fs.writeFileSync(legacyLayoutFile, JSON.stringify(seeded));
 
       const response = getOtpIdentityResponse(MS_KEY);
 
-      expect(response).toEqual(seeded);
-      expect(fs.existsSync(legacyFile)).toBe(false);
-      expect(fs.existsSync(msFile)).toBe(true);
+      expect(response.items.map((i) => i.name)).toEqual(["LegacyOnly"]);
+      expect(fs.existsSync(legacyLayoutFile)).toBe(false);
+      expect(fs.existsSync(`${legacyLayoutFile}.migrated`)).toBe(true);
     });
 
-    test("does NOT clobber the new-name file when both exist", () => {
-      const legacy: OtpIdentityResponse = {
-        items: [
-          { id: "legacy", name: "Legacy", login: { totp: "otpauth://l" } },
-        ],
+    test("does not consult the pre-multi-provider file for non-microsoft providers", () => {
+      const seeded: OtpIdentityResponse = {
+        items: [{ id: "x", name: "X", login: { totp: "otpauth://x" } }],
       };
-      const current: OtpIdentityResponse = {
-        items: [
-          { id: "current", name: "Current", login: { totp: "otpauth://c" } },
-        ],
-      };
-      fs.writeFileSync(legacyFile, JSON.stringify(legacy));
-      fs.writeFileSync(msFile, JSON.stringify(current));
-
-      const response = getOtpIdentityResponse(MS_KEY);
-
-      expect(response).toEqual(current);
-      // legacy file is left untouched (we don't risk discarding data we can't
-      // be sure was already migrated).
-      expect(fs.existsSync(legacyFile)).toBe(true);
-    });
-
-    test("does not migrate the legacy file for the google provider", () => {
-      const legacy: OtpIdentityResponse = {
-        items: [
-          { id: "legacy", name: "Legacy", login: { totp: "otpauth://l" } },
-        ],
-      };
-      fs.writeFileSync(legacyFile, JSON.stringify(legacy));
+      fs.writeFileSync(legacyLayoutFile, JSON.stringify(seeded));
 
       const response = getOtpIdentityResponse(GOOGLE_KEY);
 
       expect(response).toEqual({ items: [] });
-      expect(fs.existsSync(legacyFile)).toBe(true);
-      expect(fs.existsSync(googleFile)).toBe(false);
+      // The legacy file is not touched; it might be a microsoft user's data
+      // and they haven't logged in yet.
+      expect(fs.existsSync(legacyLayoutFile)).toBe(true);
+    });
+
+    test("prefers the new-layout file over the legacy file when both exist", () => {
+      fs.writeFileSync(
+        newLayoutFile,
+        JSON.stringify({
+          items: [{ id: "n1", name: "FromNew", login: { totp: "otpauth://n" } }],
+        })
+      );
+      fs.writeFileSync(
+        legacyLayoutFile,
+        JSON.stringify({
+          items: [{ id: "l1", name: "FromLegacy", login: { totp: "otpauth://l" } }],
+        })
+      );
+
+      const response = getOtpIdentityResponse(MS_KEY);
+
+      expect(response.items.map((i) => i.name)).toEqual(["FromNew"]);
+      // Legacy file is left alone so it could still be migrated for some
+      // other context — we only consume one source per user.
+      expect(fs.existsSync(legacyLayoutFile)).toBe(true);
+      expect(fs.existsSync(`${newLayoutFile}.migrated`)).toBe(true);
+    });
+
+    test("only runs the migration once per user per process", () => {
+      fs.writeFileSync(
+        newLayoutFile,
+        JSON.stringify({
+          items: [{ id: "x", name: "X", login: { totp: "otpauth://x" } }],
+        })
+      );
+
+      // First read migrates and renames.
+      getOtpIdentityResponse(MS_KEY);
+
+      // Re-create the JSON file with different data; subsequent reads must
+      // NOT re-import (we already marked this user migrated for the process).
+      fs.writeFileSync(
+        newLayoutFile,
+        JSON.stringify({
+          items: [
+            { id: "y", name: "Y-should-be-ignored", login: { totp: "otpauth://y" } },
+          ],
+        })
+      );
+
+      const response = getOtpIdentityResponse(MS_KEY);
+      expect(response.items.map((i) => i.name)).toEqual(["X"]);
+    });
+
+    test("does not crash when the JSON file is corrupt — user looks empty", () => {
+      fs.writeFileSync(newLayoutFile, "not-json{{{");
+
+      const response = getOtpIdentityResponse(MS_KEY);
+
+      expect(response).toEqual({ items: [] });
+      // Corrupt file is left on disk for manual recovery.
+      expect(fs.existsSync(newLayoutFile)).toBe(true);
     });
   });
 
@@ -217,8 +282,9 @@ describe("OtpIdentityDAO", () => {
       expect(response.items).toHaveLength(1);
       expect(response.items[0].name).toBe("Github");
       expect(response.items[0].login.totp).toContain("Github");
-      // uuid v4 is 36 chars including dashes
-      expect(response.items[0].id).toHaveLength(36);
+      expect(response.items[0].id).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      );
     });
 
     test("appends to an existing list without dropping prior entries", async () => {
@@ -247,9 +313,6 @@ describe("OtpIdentityDAO", () => {
 
       const response = getOtpIdentityResponse(MS_KEY);
       expect(response.items[0].id).not.toBe("client-supplied-id");
-      expect(response.items[0].id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-      );
     });
 
     test("generates a different id for each invocation", async () => {
@@ -266,17 +329,6 @@ describe("OtpIdentityDAO", () => {
       expect(ids[0]).not.toBe(ids[1]);
     });
 
-    test("persists output as pretty-printed JSON for human inspection", async () => {
-      await createOtpIdentity(MS_KEY, {
-        name: "Github",
-        login: { totp: "otpauth://totp/Github?secret=A" },
-      });
-
-      const raw = fs.readFileSync(msFile, "utf-8");
-      // Pretty-printed output has at least one newline; a single-line dump would not.
-      expect(raw).toContain("\n");
-    });
-
     test("rejects an unknown provider", async () => {
       await expect(
         createOtpIdentity(
@@ -288,13 +340,12 @@ describe("OtpIdentityDAO", () => {
   });
 
   describe("updateOtpIdentity", () => {
-    test("merges the given fields into the matching identity", async () => {
+    test("updates the matching identity", async () => {
       await createOtpIdentity(MS_KEY, {
         name: "Github",
         login: { totp: "otpauth://totp/Github?secret=A" },
       });
-      const { items } = getOtpIdentityResponse(MS_KEY);
-      const id = items[0].id;
+      const id = getOtpIdentityResponse(MS_KEY).items[0].id;
 
       await updateOtpIdentity(MS_KEY, id, {
         name: "Github (work)",
@@ -319,8 +370,7 @@ describe("OtpIdentityDAO", () => {
         login: { totp: "otpauth://totp/Other" },
       });
 
-      const after = getOtpIdentityResponse(MS_KEY);
-      expect(after).toEqual(before);
+      expect(getOtpIdentityResponse(MS_KEY)).toEqual(before);
     });
 
     test("only mutates the matching identity, leaving siblings untouched", async () => {
@@ -343,10 +393,35 @@ describe("OtpIdentityDAO", () => {
 
       const after = getOtpIdentityResponse(MS_KEY).items;
       expect(after.find((i) => i.id === githubId)?.name).toBe("Github (work)");
-      // Sibling identity is untouched
       expect(after.find((i) => i.id === googleSnapshot.id)).toEqual(
         googleSnapshot
       );
+    });
+
+    test("cannot update another user's identity (user_id is part of the WHERE clause)", async () => {
+      // Two users seeded with identities; trying to update user A's row from
+      // user B's session must be a no-op.
+      await createOtpIdentity(MS_KEY, {
+        name: "Mine",
+        login: { totp: "otpauth://totp/Mine" },
+      });
+      const myId = getOtpIdentityResponse(MS_KEY).items[0].id;
+      const otherKey: UserKey = {
+        email: "other@example.com",
+        provider: "microsoft",
+      };
+      await createOtpIdentity(otherKey, {
+        name: "Theirs",
+        login: { totp: "otpauth://totp/Theirs" },
+      });
+
+      await updateOtpIdentity(otherKey, myId, {
+        name: "Hijacked",
+        login: { totp: "otpauth://totp/Hijacked" },
+      });
+
+      // Original owner's record is unchanged.
+      expect(getOtpIdentityResponse(MS_KEY).items[0].name).toBe("Mine");
     });
   });
 
@@ -392,8 +467,7 @@ describe("OtpIdentityDAO", () => {
       expect(getOtpIdentityResponse(MS_KEY).items).toHaveLength(0);
     });
 
-    test("is safe to call against a user that has never written a file", async () => {
-      // No prior create; deleteOtpIdentity must not throw.
+    test("is safe to call against a user that has never written anything", async () => {
       const freshKey: UserKey = {
         email: "brand-new@example.com",
         provider: "microsoft",
@@ -401,8 +475,26 @@ describe("OtpIdentityDAO", () => {
       await expect(
         deleteOtpIdentity(freshKey, "any-id")
       ).resolves.toBeUndefined();
-      // It will materialize an empty file as a side effect.
       expect(getOtpIdentityResponse(freshKey).items).toHaveLength(0);
+    });
+
+    test("cannot delete another user's identity", async () => {
+      await createOtpIdentity(MS_KEY, {
+        name: "Mine",
+        login: { totp: "otpauth://totp/Mine" },
+      });
+      const myId = getOtpIdentityResponse(MS_KEY).items[0].id;
+      const otherKey: UserKey = {
+        email: "other@example.com",
+        provider: "microsoft",
+      };
+
+      await deleteOtpIdentity(otherKey, myId);
+
+      // Original owner's record survives.
+      expect(getOtpIdentityResponse(MS_KEY).items.map((i) => i.name)).toEqual([
+        "Mine",
+      ]);
     });
   });
 

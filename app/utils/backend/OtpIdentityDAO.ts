@@ -1,9 +1,11 @@
-import * as fs from "fs";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { v4 as uuidv4 } from "uuid";
 import type { AuthProviderId } from "~/types.d.ts";
 
 /**
- * A single TOTP identity record persisted on disk.
+ * A single TOTP identity record persisted in SQLite.
  */
 export type OtpIdentity = {
   /** Stable v4 UUID used as the primary key. */
@@ -18,39 +20,42 @@ export type OtpIdentity = {
 };
 
 /**
- * Wire format used by both the file backing store and the `/api/otp` route.
+ * Wire format used by both the storage layer and the `/api/otp` route.
  */
 export type OtpIdentityResponse = {
   items: OtpIdentity[];
 };
 
 /**
- * The minimum identity needed to address an on-disk vault.
+ * The minimum identity needed to address a user's vault.
  *
- * Vaults are namespaced as `<email>-<provider>.cred.json` so the same human
- * logging in via Microsoft and Google sees two independent stores. The User
- * type satisfies this shape so callers can pass `session.user` directly.
+ * Vaults are namespaced as `<sanitized-email>-<provider>` so the same
+ * human logging in via Microsoft and Google sees two independent stores.
+ * The User type satisfies this shape so callers can pass `session.user`
+ * directly.
  */
 export type UserKey = {
   email: string;
   provider: AuthProviderId;
 };
 
-/** Allowlist of provider ids accepted as part of the vault filename. */
+/** Allowlist of provider ids we accept as part of a vault key. */
 const _ALLOWED_PROVIDERS: ReadonlySet<AuthProviderId> = new Set([
   "microsoft",
   "google",
 ]);
 
+/** SQLite filename, resolved relative to `process.cwd()`. */
+const _DB_FILENAME = "otp.db";
+
 /**
- * Strict-allowlist sanitizer for the email portion of the vault filename.
+ * Strict-allowlist sanitizer for the email portion of the vault key.
  *
- * The on-disk path is `${cwd}/${email}-${provider}.cred.json` — naively
- * formatting an attacker-influenced email into that path is a write-anywhere
- * vulnerability (`../`, `/`, NUL, etc.). We lowercase, then replace any
- * character outside a conservative allowlist with `_`. The result is an
- * idempotent function so callers can compute the same key from `user.email`
- * on every request.
+ * Originally needed to keep an attacker-influenced email from formatting
+ * into a filesystem path. Even with SQLite-backed storage we still:
+ *   - resolve legacy `<email>-<provider>.cred.json` files at migration time,
+ *   - derive a stable `user_id` column value from `(email, provider)`,
+ * so the same lowercasing + allowlist still applies.
  */
 export function sanitizeEmailForFilename(email: string): string {
   const trimmed = email.trim().toLowerCase();
@@ -61,78 +66,202 @@ export function sanitizeEmailForFilename(email: string): string {
 }
 
 /**
- * Resolve the on-disk path that holds a user's identities.
- *
- * @throws if the provider id is not in the allowlist or the email is empty.
+ * Compose the per-user key stored in the `identities.user_id` column.
  */
-function _getOtpIdentityFilePath(key: UserKey): string {
+function _userIdFor(key: UserKey): string {
   if (!_ALLOWED_PROVIDERS.has(key.provider)) {
     throw new Error(`unknown auth provider: ${key.provider}`);
   }
-  const safeEmail = sanitizeEmailForFilename(key.email);
-  return `${safeEmail}-${key.provider}.cred.json`;
+  return `${sanitizeEmailForFilename(key.email)}-${key.provider}`;
+}
+
+// ---------------------------------------------------------------------------
+// Connection + schema management
+// ---------------------------------------------------------------------------
+
+/**
+ * Cached connection per absolute DB path.
+ *
+ * The DB file lives at `${cwd}/otp.db`. In production CWD is fixed so this
+ * is effectively a singleton; in tests each spec `chdir`s into a fresh
+ * tmpdir, which yields a different absolute path and therefore a fresh
+ * connection — exactly the isolation tests need.
+ */
+const _connections = new Map<string, DatabaseSync>();
+
+/**
+ * Tracks per-user vault migrations that have already been attempted in
+ * this process, so we don't keep stat-ing for legacy files on every read.
+ */
+const _migratedUserIds = new Set<string>();
+
+function _resolveDbPath(): string {
+  return path.resolve(process.cwd(), _DB_FILENAME);
+}
+
+function _initSchema(db: DatabaseSync): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS identities (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT NOT NULL,
+      name        TEXT NOT NULL,
+      totp        TEXT NOT NULL,
+      created_at  INTEGER NOT NULL,
+      updated_at  INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_identities_user
+      ON identities(user_id);
+  `);
+}
+
+function _getDb(): DatabaseSync {
+  const dbPath = _resolveDbPath();
+  let db = _connections.get(dbPath);
+  if (!db) {
+    db = new DatabaseSync(dbPath);
+    _initSchema(db);
+    _connections.set(dbPath, db);
+  }
+  return db;
 }
 
 /**
- * One-shot rename of pre-multi-provider vault files.
+ * Test-only: drop all cached connections + migration markers.
  *
- * Before this change vaults were stored as `${email}.cred.json`, implicitly
- * tied to the only login path (Microsoft). On read for a Microsoft user we
- * promote that legacy file to `${email}-microsoft.cred.json` so the same data
- * is preserved. The migration is skipped if the new file already exists,
- * because that means the user has already written under the new name and we
- * must not clobber it.
+ * Useful for tests that hop between CWDs and want a clean slate. Production
+ * code never calls this.
  */
-function _migrateLegacyMicrosoftVault(key: UserKey): void {
-  if (key.provider !== "microsoft") {
+export function _resetForTests(): void {
+  for (const db of _connections.values()) {
+    try {
+      db.close();
+    } catch {
+      // ignore — already closed
+    }
+  }
+  _connections.clear();
+  _migratedUserIds.clear();
+}
+
+// ---------------------------------------------------------------------------
+// JSON-vault → SQLite migration
+// ---------------------------------------------------------------------------
+
+/**
+ * One-shot import of any pre-existing JSON vault for `key` into SQLite.
+ *
+ * Looks for, in order:
+ *   1. `<sanitized-email>-<provider>.cred.json` (post-Phase-1 layout)
+ *   2. `<sanitized-email>.cred.json` (legacy single-provider layout, only
+ *      consulted for the microsoft provider)
+ *
+ * The matching file is parsed, its items are inserted, and the file is
+ * renamed with a `.migrated` suffix so the migration is idempotent and the
+ * original is preserved for audit.
+ *
+ * If the file is unreadable / not JSON / has no items, we silently treat
+ * the user as new — the alternative (refusing to log in) is worse.
+ */
+function _migrateJsonVaultIfPresent(key: UserKey): void {
+  const userId = _userIdFor(key);
+  if (_migratedUserIds.has(userId)) {
     return;
   }
+  _migratedUserIds.add(userId);
+
   const safeEmail = sanitizeEmailForFilename(key.email);
-  const legacyPath = `${safeEmail}.cred.json`;
-  const newPath = `${safeEmail}-microsoft.cred.json`;
-  try {
-    if (fs.existsSync(legacyPath) && !fs.existsSync(newPath)) {
-      fs.renameSync(legacyPath, newPath);
+  const candidates: string[] = [`${safeEmail}-${key.provider}.cred.json`];
+  if (key.provider === "microsoft") {
+    candidates.push(`${safeEmail}.cred.json`);
+  }
+
+  for (const relPath of candidates) {
+    const abs = path.resolve(process.cwd(), relPath);
+    if (!fs.existsSync(abs)) continue;
+
+    try {
+      const parsed = JSON.parse(fs.readFileSync(abs, "utf-8")) as Partial<
+        OtpIdentityResponse
+      >;
+      const items = Array.isArray(parsed?.items) ? parsed.items : [];
+      _bulkInsert(userId, items);
+      fs.renameSync(abs, `${abs}.migrated`);
+    } catch {
+      // Corrupt JSON — leave it on disk for manual recovery, but don't
+      // block the user from logging in.
     }
-  } catch {
-    // best-effort migration; on failure fall through and the read returns []
+    return; // only one source per user
   }
 }
 
-/**
- * Persist `otpIdentityResponse` for `key` by overwriting the JSON file.
- */
-function _updateOtpIdentityFile(
-  key: UserKey,
-  otpIdentityResponse: OtpIdentityResponse
-) {
-  fs.writeFileSync(
-    _getOtpIdentityFilePath(key),
-    JSON.stringify(otpIdentityResponse, null, 2)
-  );
+function _bulkInsert(userId: string, items: readonly OtpIdentity[]): void {
+  if (items.length === 0) return;
+
+  const db = _getDb();
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO identities
+      (id, user_id, name, totp, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const now = Date.now();
+  db.exec("BEGIN");
+  try {
+    for (const item of items) {
+      insert.run(
+        item.id || uuidv4(),
+        userId,
+        item.name,
+        item.login?.totp ?? "",
+        now,
+        now
+      );
+    }
+    db.exec("COMMIT");
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
 }
 
+// ---------------------------------------------------------------------------
+// CRUD
+// ---------------------------------------------------------------------------
+
 /**
- * Read the persisted identity list for a user.
+ * Read every identity for a user.
  *
- * Returns an empty list when the file does not exist or cannot be parsed,
- * which makes the first-write path implicit (no setup step required).
+ * Returns an empty list when the user has nothing persisted yet, so the
+ * frontend's "first identity" path stays implicit.
  */
 export function getOtpIdentityResponse(key: UserKey): OtpIdentityResponse {
-  _migrateLegacyMicrosoftVault(key);
-  try {
-    return JSON.parse(
-      fs.readFileSync(_getOtpIdentityFilePath(key), "utf-8")
-    ) as OtpIdentityResponse;
-  } catch (err) {
-    return {
-      items: [],
-    };
-  }
+  const userId = _userIdFor(key);
+  _migrateJsonVaultIfPresent(key);
+
+  // `rowid` is sqlite's implicit insertion-order column. We use it as a
+  // tie-breaker because two creates in the same millisecond would otherwise
+  // sort by random UUID.
+  const rows = _getDb()
+    .prepare(
+      `SELECT id, name, totp FROM identities
+         WHERE user_id = ?
+         ORDER BY created_at ASC, rowid ASC`
+    )
+    .all(userId) as Array<{ id: string; name: string; totp: string }>;
+
+  return {
+    items: rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      login: { totp: row.totp },
+    })),
+  };
 }
 
 /**
- * Append a new identity to the user's list, assigning a fresh v4 UUID.
+ * Append a new identity, assigning a fresh v4 UUID. Any caller-supplied
+ * `id` is discarded (the JSDoc previously claimed this and we preserve
+ * that behavior).
  */
 export async function createOtpIdentity(
   key: UserKey,
@@ -143,22 +272,21 @@ export async function createOtpIdentity(
     };
   }
 ) {
-  const otpIdentityResponse = await getOtpIdentityResponse(key);
+  const userId = _userIdFor(key);
+  _migrateJsonVaultIfPresent(key);
 
-  if (!otpIdentityResponse) {
-    throw "OtpIdentityFile not found";
-  }
-
-  otpIdentityResponse.items.push({
-    ...body,
-    id: uuidv4(),
-  });
-
-  _updateOtpIdentityFile(key, otpIdentityResponse);
+  const now = Date.now();
+  _getDb()
+    .prepare(
+      `INSERT INTO identities (id, user_id, name, totp, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+    .run(uuidv4(), userId, body.name, body.login.totp, now, now);
 }
 
 /**
- * Patch the identity matching `id`. Calling with an unknown id is a no-op.
+ * Patch the identity matching `id`. Calling with an unknown id is a no-op
+ * (matching the file-backed predecessor's contract).
  */
 export async function updateOtpIdentity(
   key: UserKey,
@@ -170,35 +298,26 @@ export async function updateOtpIdentity(
     };
   }
 ) {
-  const otpIdentityResponse = await getOtpIdentityResponse(key);
+  const userId = _userIdFor(key);
+  _migrateJsonVaultIfPresent(key);
 
-  if (!otpIdentityResponse) {
-    throw "OtpIdentityFile not found";
-  }
-
-  otpIdentityResponse.items = otpIdentityResponse.items.map((item) => {
-    if (item.id === id) {
-      item = { ...item, ...body };
-    }
-    return item;
-  });
-
-  _updateOtpIdentityFile(key, otpIdentityResponse);
+  _getDb()
+    .prepare(
+      `UPDATE identities
+          SET name = ?, totp = ?, updated_at = ?
+        WHERE id = ? AND user_id = ?`
+    )
+    .run(body.name, body.login.totp, Date.now(), id, userId);
 }
 
 /**
- * Remove the identity matching `id`. No-op when no item matches.
+ * Remove the identity matching `id`. No-op when no row matches.
  */
 export async function deleteOtpIdentity(key: UserKey, id: string) {
-  const otpIdentityResponse = await getOtpIdentityResponse(key);
+  const userId = _userIdFor(key);
+  _migrateJsonVaultIfPresent(key);
 
-  if (!otpIdentityResponse) {
-    throw "OtpIdentityFile not found";
-  }
-
-  otpIdentityResponse.items = otpIdentityResponse.items.filter((item) => {
-    return item.id !== id;
-  });
-
-  _updateOtpIdentityFile(key, otpIdentityResponse);
+  _getDb()
+    .prepare(`DELETE FROM identities WHERE id = ? AND user_id = ?`)
+    .run(id, userId);
 }
