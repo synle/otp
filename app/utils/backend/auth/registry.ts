@@ -1,4 +1,5 @@
 import type { AuthProviderId } from "~/types.d.ts";
+import { googleProvider } from "./google";
 import { microsoftProvider } from "./microsoft";
 import type { AuthProvider } from "./types";
 
@@ -11,8 +12,8 @@ import type { AuthProvider } from "./types";
  */
 const _PROVIDERS: Record<AuthProviderId, AuthProvider> = {
   microsoft: microsoftProvider,
-  // google: googleProvider, (added in Phase 3)
-} as Record<AuthProviderId, AuthProvider>;
+  google: googleProvider,
+};
 
 /**
  * Resolve a provider by its URL id.

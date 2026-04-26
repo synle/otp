@@ -32,7 +32,7 @@ type SessionFlashData = {
  * carries the user identity that gates every route, so a known/empty secret
  * means anyone can forge a session. We hard-fail at boot in that case.
  */
-function _resolveSessionSecret(): string {
+export function _resolveSessionSecret(): string {
   const fromEnv = process.env.SESSION_SECRET || process.env.AAD_SSO_CLIENT_VALUE;
   if (fromEnv) {
     return fromEnv;
