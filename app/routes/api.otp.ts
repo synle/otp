@@ -8,25 +8,21 @@ import { getSession } from "~/utils/backend/Session";
  * GET `/api/otp` - return the authenticated user's full identity list.
  *
  * Responses:
- *   - 200 with `OtpIdentityResponse` JSON when the session has a `mail` claim.
- *   - 401 when the request has no valid session / no `mail`.
+ *   - 200 with `OtpIdentityResponse` JSON when the session has a user.
+ *   - 401 when the request has no valid session.
  *   - 500 on any unexpected failure reading the persisted file.
  */
 export async function loader(args: LoaderArgs) {
   const { request } = args;
   try {
     const session = await getSession(request.headers.get("Cookie"));
+    const user = session.get("user") as User | undefined;
 
-    const user = session.get("user") as User;
-    const email = user.mail;
-
-    if (email) {
-      return json(await getOtpIdentityResponse(email));
+    if (!user?.email) {
+      return new Response(`Unauthorized`, { status: 401 });
     }
 
-    return new Response(`Unauthorized`, {
-      status: 401,
-    });
+    return json(await getOtpIdentityResponse(user));
   } catch (error) {
     return new Response(`Failed to getOtpIdentityResponse - ${error}`, {
       status: 500,

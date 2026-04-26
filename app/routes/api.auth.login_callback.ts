@@ -1,17 +1,26 @@
 import { ActionFunction, redirect } from "@remix-run/node";
 import axios from "axios";
+import type { User } from "~/types.d.ts";
 import { commitSession, getSession } from "~/utils/backend/Session";
 import { SCOPE, confidentialClientApplication } from "~/utils/backend/SSO";
 
 /**
- * Fetch the user profile from Microsoft Graph `/me` using a bearer access token.
+ * Raw subset of the Microsoft Graph `/me` profile we read at login.
  *
- * @param accessToken - Access token obtained from `acquireTokenByCode`.
- * @returns The Graph `/me` profile object (typed loosely as the route does no validation).
+ * We don't validate the full schema — anything else is opaque.
  */
-async function _getUserInformation(accessToken: string) {
-  // do the me api to get profile
-  const { data: aadMeProfile } = await axios.get(
+type GraphMeProfile = {
+  id?: string;
+  mail?: string | null;
+  userPrincipalName?: string | null;
+  displayName?: string | null;
+};
+
+/**
+ * Fetch the user profile from Microsoft Graph `/me` using a bearer access token.
+ */
+async function _getUserInformation(accessToken: string): Promise<GraphMeProfile> {
+  const { data } = await axios.get<GraphMeProfile>(
     `https://graph.microsoft.com/v1.0/me`,
     {
       headers: {
@@ -21,7 +30,29 @@ async function _getUserInformation(accessToken: string) {
     }
   );
 
-  return aadMeProfile;
+  return data;
+}
+
+/**
+ * Normalize a Graph `/me` profile into our provider-agnostic `User` shape.
+ *
+ * - Prefers `mail`, falling back to `userPrincipalName` for personal MSAs
+ *   where `mail` is sometimes null.
+ * - Lowercases the email so it matches the vault key the DAO uses.
+ */
+function _normalizeMicrosoftProfile(profile: GraphMeProfile): User {
+  const email = (profile.mail || profile.userPrincipalName || "")
+    .trim()
+    .toLowerCase();
+  if (!email) {
+    throw new Error("microsoft profile is missing both mail and userPrincipalName");
+  }
+  return {
+    id: profile.id || email,
+    email,
+    displayName: profile.displayName || email,
+    provider: "microsoft",
+  };
 }
 
 /**
@@ -31,14 +62,13 @@ async function _getUserInformation(accessToken: string) {
  * Steps:
  *   1. Redeem the auth code for an access token
  *   2. Call Graph `/me` to fetch the user profile
- *   3. Persist `access_token` + `user` in the session cookie
+ *   3. Persist the *normalized* profile (no access token) in the session
  *   4. Redirect back to `/`
  */
 export let action: ActionFunction = async ({ request }) => {
   const formData = new URLSearchParams(await request.text());
 
   try {
-    const url = new URL(request.url);
     const redirectUri = process.env.AAD_REDIRECT_URL
       ? process.env.AAD_REDIRECT_URL
       : formData.get("state") || "";
@@ -54,11 +84,10 @@ export let action: ActionFunction = async ({ request }) => {
     });
 
     const { accessToken } = response;
-    const user = await _getUserInformation(accessToken);
+    const rawProfile = await _getUserInformation(accessToken);
+    const user = _normalizeMicrosoftProfile(rawProfile);
 
-    // set cookies
     const session = await getSession(request.headers.get("Cookie"));
-    session.set("access_token", accessToken);
     session.set("user", user);
 
     return redirect(`/`, {

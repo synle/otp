@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import type { AuthProviderId } from "~/types.d.ts";
 
 /**
  * A single TOTP identity record persisted on disk.
@@ -24,45 +25,104 @@ export type OtpIdentityResponse = {
 };
 
 /**
- * Resolve the on-disk path that holds a user's identities.
- * Files are namespaced per user email so each authenticated user sees only their own list.
+ * The minimum identity needed to address an on-disk vault.
  *
- * @param email - The authenticated user's email (`session.user.mail`).
- * @returns A path relative to the process CWD.
+ * Vaults are namespaced as `<email>-<provider>.cred.json` so the same human
+ * logging in via Microsoft and Google sees two independent stores. The User
+ * type satisfies this shape so callers can pass `session.user` directly.
  */
-function _getOtpIdentityFilePath(email: string) {
-  return `${email}.cred.json`;
+export type UserKey = {
+  email: string;
+  provider: AuthProviderId;
+};
+
+/** Allowlist of provider ids accepted as part of the vault filename. */
+const _ALLOWED_PROVIDERS: ReadonlySet<AuthProviderId> = new Set([
+  "microsoft",
+  "google",
+]);
+
+/**
+ * Strict-allowlist sanitizer for the email portion of the vault filename.
+ *
+ * The on-disk path is `${cwd}/${email}-${provider}.cred.json` — naively
+ * formatting an attacker-influenced email into that path is a write-anywhere
+ * vulnerability (`../`, `/`, NUL, etc.). We lowercase, then replace any
+ * character outside a conservative allowlist with `_`. The result is an
+ * idempotent function so callers can compute the same key from `user.email`
+ * on every request.
+ */
+export function sanitizeEmailForFilename(email: string): string {
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed) {
+    throw new Error("email is required to derive a vault key");
+  }
+  return trimmed.replace(/[^a-z0-9._%+@-]/g, "_");
 }
 
 /**
- * Persist `otpIdentityResponse` for `email` by overwriting the JSON file.
- * Pretty-printed with 2-space indentation so manual inspection is easy.
+ * Resolve the on-disk path that holds a user's identities.
  *
- * @param email - The owning user's email.
- * @param otpIdentityResponse - Full list to persist (this is a full overwrite, not a merge).
+ * @throws if the provider id is not in the allowlist or the email is empty.
+ */
+function _getOtpIdentityFilePath(key: UserKey): string {
+  if (!_ALLOWED_PROVIDERS.has(key.provider)) {
+    throw new Error(`unknown auth provider: ${key.provider}`);
+  }
+  const safeEmail = sanitizeEmailForFilename(key.email);
+  return `${safeEmail}-${key.provider}.cred.json`;
+}
+
+/**
+ * One-shot rename of pre-multi-provider vault files.
+ *
+ * Before this change vaults were stored as `${email}.cred.json`, implicitly
+ * tied to the only login path (Microsoft). On read for a Microsoft user we
+ * promote that legacy file to `${email}-microsoft.cred.json` so the same data
+ * is preserved. The migration is skipped if the new file already exists,
+ * because that means the user has already written under the new name and we
+ * must not clobber it.
+ */
+function _migrateLegacyMicrosoftVault(key: UserKey): void {
+  if (key.provider !== "microsoft") {
+    return;
+  }
+  const safeEmail = sanitizeEmailForFilename(key.email);
+  const legacyPath = `${safeEmail}.cred.json`;
+  const newPath = `${safeEmail}-microsoft.cred.json`;
+  try {
+    if (fs.existsSync(legacyPath) && !fs.existsSync(newPath)) {
+      fs.renameSync(legacyPath, newPath);
+    }
+  } catch {
+    // best-effort migration; on failure fall through and the read returns []
+  }
+}
+
+/**
+ * Persist `otpIdentityResponse` for `key` by overwriting the JSON file.
  */
 function _updateOtpIdentityFile(
-  email: string,
+  key: UserKey,
   otpIdentityResponse: OtpIdentityResponse
 ) {
   fs.writeFileSync(
-    _getOtpIdentityFilePath(email),
+    _getOtpIdentityFilePath(key),
     JSON.stringify(otpIdentityResponse, null, 2)
   );
 }
 
 /**
  * Read the persisted identity list for a user.
+ *
  * Returns an empty list when the file does not exist or cannot be parsed,
  * which makes the first-write path implicit (no setup step required).
- *
- * @param email - The owning user's email.
- * @returns The persisted response, or `{ items: [] }` on miss.
  */
-export function getOtpIdentityResponse(email: string) {
+export function getOtpIdentityResponse(key: UserKey): OtpIdentityResponse {
+  _migrateLegacyMicrosoftVault(key);
   try {
     return JSON.parse(
-      fs.readFileSync(_getOtpIdentityFilePath(email), "utf-8")
+      fs.readFileSync(_getOtpIdentityFilePath(key), "utf-8")
     ) as OtpIdentityResponse;
   } catch (err) {
     return {
@@ -73,13 +133,9 @@ export function getOtpIdentityResponse(email: string) {
 
 /**
  * Append a new identity to the user's list, assigning a fresh v4 UUID.
- *
- * @param email - The owning user's email.
- * @param body - Identity payload; an `id` in the body is overwritten by the generated UUID.
- * @throws When the underlying response cannot be loaded.
  */
 export async function createOtpIdentity(
-  email: string,
+  key: UserKey,
   body: Partial<OtpIdentity> & {
     name: string;
     login: {
@@ -87,32 +143,25 @@ export async function createOtpIdentity(
     };
   }
 ) {
-  const otpIdentityResponse = await getOtpIdentityResponse(email);
+  const otpIdentityResponse = await getOtpIdentityResponse(key);
 
   if (!otpIdentityResponse) {
     throw "OtpIdentityFile not found";
   }
 
   otpIdentityResponse.items.push({
-    id: uuidv4(),
     ...body,
+    id: uuidv4(),
   });
 
-  // update the file
-  _updateOtpIdentityFile(email, otpIdentityResponse);
+  _updateOtpIdentityFile(key, otpIdentityResponse);
 }
 
 /**
- * Patch the identity matching `id` with the values in `body`.
- * Items whose id does not match are returned untouched, so calling with an
- * unknown id is effectively a no-op.
- *
- * @param email - The owning user's email.
- * @param id - The id of the identity to update.
- * @param body - Fields to merge into the matched identity.
+ * Patch the identity matching `id`. Calling with an unknown id is a no-op.
  */
 export async function updateOtpIdentity(
-  email: string,
+  key: UserKey,
   id: string,
   body: Partial<OtpIdentity> & {
     name: string;
@@ -121,48 +170,35 @@ export async function updateOtpIdentity(
     };
   }
 ) {
-  const otpIdentityResponse = await getOtpIdentityResponse(email);
+  const otpIdentityResponse = await getOtpIdentityResponse(key);
 
   if (!otpIdentityResponse) {
     throw "OtpIdentityFile not found";
   }
 
-  // TODO: handle cases where the patch can't find matching id
-
-  // doing the update...
   otpIdentityResponse.items = otpIdentityResponse.items.map((item) => {
     if (item.id === id) {
       item = { ...item, ...body };
     }
-
     return item;
   });
 
-  // update the file
-  _updateOtpIdentityFile(email, otpIdentityResponse);
+  _updateOtpIdentityFile(key, otpIdentityResponse);
 }
 
 /**
- * Remove the identity matching `id` from the user's list.
- * No-op when no item matches.
- *
- * @param email - The owning user's email.
- * @param id - The id of the identity to remove.
+ * Remove the identity matching `id`. No-op when no item matches.
  */
-export async function deleteOtpIdentity(email: string, id: string) {
-  const otpIdentityResponse = await getOtpIdentityResponse(email);
+export async function deleteOtpIdentity(key: UserKey, id: string) {
+  const otpIdentityResponse = await getOtpIdentityResponse(key);
 
   if (!otpIdentityResponse) {
     throw "OtpIdentityFile not found";
   }
 
-  // TODO: handle cases where the patch can't find matching id
-
-  // doing the update...
   otpIdentityResponse.items = otpIdentityResponse.items.filter((item) => {
     return item.id !== id;
   });
 
-  // update the file
-  _updateOtpIdentityFile(email, otpIdentityResponse);
+  _updateOtpIdentityFile(key, otpIdentityResponse);
 }
