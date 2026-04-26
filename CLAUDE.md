@@ -121,5 +121,12 @@ Any of these missing is treated as "skipped", not a failure.
 - `tsconfig.json` covers TS/TSX files.
 - `jsconfig.json` is included so VSCode IntelliSense also works for plain JS
   files (`index.mjs`, `.eslintrc.js`) and respects the `~/*` path alias.
+- `.vscode/launch.json` ships five one-click launch configs (Run and Debug
+  panel / `F5`), matching the sister `remixjs-msal-starter-code` repo:
+  - **Remix Dev Server** — `npm run dev` with the JS debugger attached
+  - **Remix Production Server (built)** — `npm start` with `NODE_ENV=production`
+  - **Vitest: Run All Tests**
+  - **Vitest: Debug Current Test File** — uses `${relativeFile}`
+  - **Vitest: Coverage**
 
 For a more complete contributor walkthrough, see [`dev.md`](./dev.md).
