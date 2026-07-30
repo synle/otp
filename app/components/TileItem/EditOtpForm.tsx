@@ -20,7 +20,7 @@ export default function (props: { item: OtpIdentity; qrCode: string }) {
   const [name, setName] = useState(item.name);
   const [totp, setTotp] = useState(item.login.totp);
   const { mutateAsync: updateOtp, isLoading: isSaving } = useUpdateOtpIdentity(
-    item.id
+    item.id,
   );
   const { data, isLoading } = useOtpCode(item.login.totp);
 

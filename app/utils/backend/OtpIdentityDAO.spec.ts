@@ -48,7 +48,7 @@ describe("OtpIdentityDAO", () => {
   describe("sanitizeEmailForFilename", () => {
     test("lowercases the email", () => {
       expect(sanitizeEmailForFilename("Foo@Example.COM")).toBe(
-        "foo@example.com"
+        "foo@example.com",
       );
     });
 
@@ -60,7 +60,7 @@ describe("OtpIdentityDAO", () => {
 
     test("strips path separators so the email cannot escape cwd at migration time", () => {
       expect(sanitizeEmailForFilename("../etc/passwd@x.com")).toBe(
-        ".._etc_passwd@x.com"
+        ".._etc_passwd@x.com",
       );
       expect(sanitizeEmailForFilename("\\..\\b@x.com")).toBe("_.._b@x.com");
     });
@@ -101,18 +101,18 @@ describe("OtpIdentityDAO", () => {
         "MS only",
       ]);
       expect(
-        getOtpIdentityResponse(GOOGLE_KEY).items.map((i) => i.name)
+        getOtpIdentityResponse(GOOGLE_KEY).items.map((i) => i.name),
       ).toEqual(["Google only"]);
     });
 
     test("namespaces by email so two users do not see each other's data", async () => {
       await createOtpIdentity(
         { email: "a@example.com", provider: "microsoft" },
-        { name: "A", login: { totp: "otpauth://totp/A" } }
+        { name: "A", login: { totp: "otpauth://totp/A" } },
       );
       await createOtpIdentity(
         { email: "b@example.com", provider: "microsoft" },
-        { name: "B", login: { totp: "otpauth://totp/B" } }
+        { name: "B", login: { totp: "otpauth://totp/B" } },
       );
 
       const a = getOtpIdentityResponse({
@@ -130,7 +130,7 @@ describe("OtpIdentityDAO", () => {
     test("is case-insensitive on the email so MIXED@x and mixed@x share a vault", async () => {
       await createOtpIdentity(
         { email: "MiXeD@x.com", provider: "microsoft" },
-        { name: "A", login: { totp: "otpauth://totp/A" } }
+        { name: "A", login: { totp: "otpauth://totp/A" } },
       );
       const lower = getOtpIdentityResponse({
         email: "mixed@x.com",
@@ -219,7 +219,7 @@ describe("OtpIdentityDAO", () => {
           items: [
             { id: "n1", name: "FromNew", login: { totp: "otpauth://n" } },
           ],
-        })
+        }),
       );
       fs.writeFileSync(
         legacyLayoutFile,
@@ -227,7 +227,7 @@ describe("OtpIdentityDAO", () => {
           items: [
             { id: "l1", name: "FromLegacy", login: { totp: "otpauth://l" } },
           ],
-        })
+        }),
       );
 
       const response = getOtpIdentityResponse(MS_KEY);
@@ -244,7 +244,7 @@ describe("OtpIdentityDAO", () => {
         newLayoutFile,
         JSON.stringify({
           items: [{ id: "x", name: "X", login: { totp: "otpauth://x" } }],
-        })
+        }),
       );
 
       // First read migrates and renames.
@@ -262,7 +262,7 @@ describe("OtpIdentityDAO", () => {
               login: { totp: "otpauth://y" },
             },
           ],
-        })
+        }),
       );
 
       const response = getOtpIdentityResponse(MS_KEY);
@@ -292,7 +292,7 @@ describe("OtpIdentityDAO", () => {
       expect(response.items[0].name).toBe("Github");
       expect(response.items[0].login.totp).toContain("Github");
       expect(response.items[0].id).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
       );
     });
 
@@ -342,8 +342,8 @@ describe("OtpIdentityDAO", () => {
       await expect(
         createOtpIdentity(
           { email: "x@y.com", provider: "yahoo" as never },
-          { name: "X", login: { totp: "otpauth://x" } }
-        )
+          { name: "X", login: { totp: "otpauth://x" } },
+        ),
       ).rejects.toThrow(/unknown auth provider/);
     });
   });
@@ -403,7 +403,7 @@ describe("OtpIdentityDAO", () => {
       const after = getOtpIdentityResponse(MS_KEY).items;
       expect(after.find((i) => i.id === githubId)?.name).toBe("Github (work)");
       expect(after.find((i) => i.id === googleSnapshot.id)).toEqual(
-        googleSnapshot
+        googleSnapshot,
       );
     });
 
@@ -482,7 +482,7 @@ describe("OtpIdentityDAO", () => {
         provider: "microsoft",
       };
       await expect(
-        deleteOtpIdentity(freshKey, "any-id")
+        deleteOtpIdentity(freshKey, "any-id"),
       ).resolves.toBeUndefined();
       expect(getOtpIdentityResponse(freshKey).items).toHaveLength(0);
     });

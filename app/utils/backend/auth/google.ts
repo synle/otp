@@ -88,7 +88,7 @@ export async function exchangeGoogleCode(args: {
         "Content-Type": "application/x-www-form-urlencoded",
         Accept: "application/json",
       },
-    }
+    },
   );
 
   if (!data.access_token) {
@@ -103,7 +103,7 @@ export async function exchangeGoogleCode(args: {
  * Exposed for unit tests; runtime callers should go through `authenticate`.
  */
 export async function fetchGoogleUserInfo(
-  accessToken: string
+  accessToken: string,
 ): Promise<GoogleUserInfo> {
   const { data } = await axios.get<GoogleUserInfo>(GOOGLE_USERINFO_URL, {
     headers: {
@@ -122,7 +122,7 @@ function _requireGoogleClientCredentials(): {
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET || "";
   if (!clientId || !clientSecret) {
     throw new Error(
-      "GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET must be set"
+      "GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET must be set",
     );
   }
   return { clientId, clientSecret };

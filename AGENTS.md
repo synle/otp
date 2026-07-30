@@ -13,7 +13,6 @@ Do NOT use:
 - `https://github.com/{owner}/{repo}/blob/HEAD/{path}?raw=1` (no CORS headers, breaks browser fetch)
 - `https://api.github.com/repos/{owner}/{repo}/contents/{path}` (returns JSON, not raw content)
 
-
 ## Git / PR Merge Policy
 
 - Always use **squash and merge** when merging PRs. Never use merge commits or rebase merges. This keeps the git history clean with one commit per PR.
@@ -51,16 +50,16 @@ in `app/utils/backend/auth/` or the `api.auth.*` routes:
 
 ## Required env vars
 
-| Var | Purpose |
-| --- | --- |
-| `SESSION_SECRET` | Signs the session + pre-auth cookies. **Required in production** — boot fails otherwise. Falls back to `AAD_SSO_CLIENT_VALUE` for legacy deployments, then a dev literal. |
-| `AAD_SSO_TENANT_ID` / `AAD_SSO_CLIENT_ID` / `AAD_SSO_CLIENT_VALUE` | Microsoft / AAD app registration. |
-| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` | Google Cloud Console OAuth client. |
-| `MICROSOFT_REDIRECT_URL` / `GOOGLE_REDIRECT_URL` | (optional) Per-provider redirect URI override. |
-| `AUTH_BASE_HOST_URL` | (optional) Origin used to build redirect URIs when no per-provider override is set. |
-| `AAD_REDIRECT_URL` / `AAD_SSO_BASE_HOST_URL` | Legacy AAD-only aliases, still honored. |
-| `OTP_DB_PATH` | (optional) Path to the SQLite file. Absolute is used as-is, relative resolves against cwd. Defaults to `${cwd}/otp.db`. Used in production deploys to point at a persistent volume (e.g. `/home/site/data/otp.db` on Azure App Service). |
-| `PORT` | Bound by `index.mjs`. Azure App Service sets this for you. |
+| Var                                                                | Purpose                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SESSION_SECRET`                                                   | Signs the session + pre-auth cookies. **Required in production** — boot fails otherwise. Falls back to `AAD_SSO_CLIENT_VALUE` for legacy deployments, then a dev literal.                                                                |
+| `AAD_SSO_TENANT_ID` / `AAD_SSO_CLIENT_ID` / `AAD_SSO_CLIENT_VALUE` | Microsoft / AAD app registration.                                                                                                                                                                                                        |
+| `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`            | Google Cloud Console OAuth client.                                                                                                                                                                                                       |
+| `MICROSOFT_REDIRECT_URL` / `GOOGLE_REDIRECT_URL`                   | (optional) Per-provider redirect URI override.                                                                                                                                                                                           |
+| `AUTH_BASE_HOST_URL`                                               | (optional) Origin used to build redirect URIs when no per-provider override is set.                                                                                                                                                      |
+| `AAD_REDIRECT_URL` / `AAD_SSO_BASE_HOST_URL`                       | Legacy AAD-only aliases, still honored.                                                                                                                                                                                                  |
+| `OTP_DB_PATH`                                                      | (optional) Path to the SQLite file. Absolute is used as-is, relative resolves against cwd. Defaults to `${cwd}/otp.db`. Used in production deploys to point at a persistent volume (e.g. `/home/site/data/otp.db` on Azure App Service). |
+| `PORT`                                                             | Bound by `index.mjs`. Azure App Service sets this for you.                                                                                                                                                                               |
 
 ## Azure deployment
 
@@ -71,9 +70,9 @@ publish-profile auth.
 
 Required GitHub Actions secrets (on the `azure-production` environment):
 
-| Secret | Source |
-| --- | --- |
-| `AZURE_WEBAPP_NAME` | The Web App's resource name. |
+| Secret                         | Source                                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `AZURE_WEBAPP_NAME`            | The Web App's resource name.                                                           |
 | `AZURE_WEBAPP_PUBLISH_PROFILE` | `az webapp deployment list-publishing-profiles -g $RG -n $APP --xml` — paste full XML. |
 
 Application settings to configure on the Web App itself (not GitHub):

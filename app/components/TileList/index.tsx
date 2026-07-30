@@ -75,7 +75,7 @@ export default function () {
 
     if (q) {
       itemsToReturn = data?.items.filter((item) =>
-        item.name.toLowerCase()?.includes(q.toLowerCase())
+        item.name.toLowerCase()?.includes(q.toLowerCase()),
       );
     }
 
@@ -113,7 +113,7 @@ export default function () {
     const searchParams = new URLSearchParams(location.search);
     setQ(searchParams.get("q") || "");
     setSortingOption(
-      searchParams.get("sortingOption") || DEFAULT_SORTING_OPTION
+      searchParams.get("sortingOption") || DEFAULT_SORTING_OPTION,
     );
     setShowQrCode(searchParams.get("showQrCode") === "1" ? true : false);
   }, []);
@@ -124,7 +124,7 @@ export default function () {
       `/?q=${q}&sortingOption=${sortingOption}&showQrCode=${
         showQrCode ? "1" : "0"
       }`,
-      { replace: true }
+      { replace: true },
     );
   }, [q, sortingOption, showQrCode]);
 

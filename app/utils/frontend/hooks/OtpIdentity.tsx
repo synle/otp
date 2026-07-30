@@ -20,7 +20,7 @@ export function useOtpIdentityList() {
     {
       retry: false,
       refetchInterval: 20000,
-    }
+    },
   );
 }
 
@@ -41,7 +41,7 @@ export function useOtpCode(tolp: string) {
       retry: false,
       refetchInterval: 5000,
       enabled: !!tolp,
-    }
+    },
   );
 }
 
@@ -59,7 +59,7 @@ export function useCreateOtpIdentity() {
       onSuccess: () => {
         queryClient.invalidateQueries("otp_list");
       },
-    }
+    },
   );
 }
 
@@ -78,7 +78,7 @@ export function useUpdateOtpIdentity(id: string) {
       onSuccess: () => {
         queryClient.invalidateQueries("otp_list");
       },
-    }
+    },
   );
 }
 
@@ -96,6 +96,6 @@ export function useDeleteOtpIdentity(id: string) {
       onSuccess: () => {
         queryClient.invalidateQueries("otp_list");
       },
-    }
+    },
   );
 }

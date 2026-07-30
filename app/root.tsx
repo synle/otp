@@ -222,7 +222,7 @@ function AppContextReducer(props: { children: JSX.Element | JSX.Element[] }) {
           (acc, ContextProvider) => (
             <ContextProvider>{acc}</ContextProvider>
           ),
-          <>{props.children}</>
+          <>{props.children}</>,
         )}
       </ThemeProvider>
     </QueryClientProvider>

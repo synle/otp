@@ -46,7 +46,7 @@ describe("auth/google", () => {
 
     test("throws when email is missing — the vault is keyed by email", () => {
       expect(() =>
-        normalizeGoogleProfile({ id: "google-sub", name: "Anon" })
+        normalizeGoogleProfile({ id: "google-sub", name: "Anon" }),
       ).toThrow(/missing email/);
     });
   });
@@ -60,11 +60,11 @@ describe("auth/google", () => {
 
       const parsed = new URL(url);
       expect(parsed.origin + parsed.pathname).toBe(
-        "https://accounts.google.com/o/oauth2/v2/auth"
+        "https://accounts.google.com/o/oauth2/v2/auth",
       );
       expect(parsed.searchParams.get("client_id")).toBe("test-client-id");
       expect(parsed.searchParams.get("redirect_uri")).toBe(
-        "https://app.example.com/cb"
+        "https://app.example.com/cb",
       );
       expect(parsed.searchParams.get("response_type")).toBe("code");
       expect(parsed.searchParams.get("state")).toBe("nonce-abc");
@@ -78,7 +78,7 @@ describe("auth/google", () => {
         googleProvider.buildAuthUrl({
           redirectUri: "https://x/cb",
           state: "n",
-        })
+        }),
       ).rejects.toThrow(/GOOGLE_OAUTH_CLIENT_ID/);
     });
   });
@@ -104,7 +104,7 @@ describe("auth/google", () => {
           headers: expect.objectContaining({
             "Content-Type": "application/x-www-form-urlencoded",
           }),
-        })
+        }),
       );
 
       // Decode the URLSearchParams body and check every required field.
@@ -125,7 +125,7 @@ describe("auth/google", () => {
           redirectUri: "y",
           clientId: "c",
           clientSecret: "s",
-        })
+        }),
       ).rejects.toThrow(/missing access_token/);
     });
   });
@@ -145,7 +145,7 @@ describe("auth/google", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer the-access-token",
           }),
-        })
+        }),
       );
     });
   });
@@ -182,7 +182,7 @@ describe("auth/google", () => {
         googleProvider.authenticate({
           code: "c",
           redirectUri: "https://x/cb",
-        })
+        }),
       ).rejects.toThrow(/GOOGLE_OAUTH_CLIENT/);
     });
   });

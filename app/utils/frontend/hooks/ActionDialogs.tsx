@@ -128,7 +128,7 @@ export function useActionDialogs() {
   /** Open a yes/no confirmation. Resolves on Yes, rejects on No/dismiss. */
   const confirm = (
     message: string | JSX.Element,
-    yesLabel?: string
+    yesLabel?: string,
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
       _actionDialogs.push({
@@ -149,7 +149,7 @@ export function useActionDialogs() {
     title: string,
     message: string | JSX.Element,
     options: ChoiceOption[],
-    required?: boolean
+    required?: boolean,
   ): Promise<string> => {
     return new Promise((resolve, reject) => {
       _actionDialogs.push({
@@ -210,7 +210,7 @@ export function useActionDialogs() {
   const dismiss = (modalIdToDismiss?: string) => {
     if (modalIdToDismiss) {
       _actionDialogs = _actionDialogs.filter(
-        (modal) => modal.key !== modalIdToDismiss
+        (modal) => modal.key !== modalIdToDismiss,
       );
     } else {
       _actionDialogs.pop();

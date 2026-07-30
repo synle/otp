@@ -21,7 +21,7 @@ describe("computeRedirectUri", () => {
         request: new Request("http://localhost:3000/api/auth/microsoft/login"),
         providerId: "microsoft",
         callbackPath,
-      })
+      }),
     ).toBe("https://app.example.com/cb-ms");
   });
 
@@ -32,7 +32,7 @@ describe("computeRedirectUri", () => {
         request: new Request("http://localhost:3000/api/auth/microsoft/login"),
         providerId: "microsoft",
         callbackPath,
-      })
+      }),
     ).toBe("https://legacy.example.com/cb");
   });
 
@@ -43,7 +43,7 @@ describe("computeRedirectUri", () => {
         request: new Request("http://localhost:3000/api/auth/google/login"),
         providerId: "google",
         callbackPath: "/api/auth/google/login_callback",
-      })
+      }),
     ).toBe("https://app.example.com/api/auth/google/login_callback");
   });
 
@@ -54,7 +54,7 @@ describe("computeRedirectUri", () => {
         request: new Request("http://localhost:3000/x"),
         providerId: "google",
         callbackPath: "/api/auth/google/login_callback",
-      })
+      }),
     ).toBe("https://app.example.com/api/auth/google/login_callback");
   });
 
@@ -64,7 +64,7 @@ describe("computeRedirectUri", () => {
         request: new Request("http://localhost:3000/api/auth/microsoft/login"),
         providerId: "microsoft",
         callbackPath,
-      })
+      }),
     ).toBe("http://localhost:3000/api/auth/microsoft/login_callback");
   });
 
@@ -74,7 +74,7 @@ describe("computeRedirectUri", () => {
         request: new Request("http://app.example.com/api/auth/google/login"),
         providerId: "google",
         callbackPath: "/api/auth/google/login_callback",
-      })
+      }),
     ).toBe("https://app.example.com/api/auth/google/login_callback");
   });
 });

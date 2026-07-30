@@ -15,6 +15,6 @@ export function useMeProfile() {
     () => axios.get<User>(`/api/auth/me`).then((r) => r.data),
     {
       retry: false,
-    }
+    },
   );
 }

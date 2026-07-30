@@ -31,7 +31,7 @@ type AlertDialogProps = AlertInput & {
  * `useActionDialogs` hook.
  */
 export default function AlertDialog(
-  props: AlertDialogProps
+  props: AlertDialogProps,
 ): JSX.Element | null {
   return (
     <Dialog

@@ -41,7 +41,7 @@ type PromptDialogProps = PromptInput & {
  * the trimmed value via `onSaveClick`.
  */
 export default function PromptDialog(
-  props: PromptDialogProps
+  props: PromptDialogProps,
 ): JSX.Element | null {
   const [value, setValue] = useState(props.value || "");
 

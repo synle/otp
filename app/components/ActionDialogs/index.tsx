@@ -15,7 +15,7 @@ type ActionDialogsProps = {};
  * descriptor's `type` and wires up the submit/dismiss callbacks.
  */
 export default function ActionDialogs(
-  props: ActionDialogsProps
+  props: ActionDialogsProps,
 ): JSX.Element | null {
   const { dialogs, dismiss } = useActionDialogs();
 

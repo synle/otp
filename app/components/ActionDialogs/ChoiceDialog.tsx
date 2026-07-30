@@ -43,7 +43,7 @@ type ChoiceDialogProps = ChoiceInput & {
  * `onSelect`. Used by `useActionDialogs().choice(...)`.
  */
 export default function ChoiceDialog(
-  props: ChoiceDialogProps
+  props: ChoiceDialogProps,
 ): JSX.Element | null {
   const {
     title,

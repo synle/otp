@@ -41,7 +41,7 @@ export function _resolveSessionSecret(): string {
 
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "SESSION_SECRET (or AAD_SSO_CLIENT_VALUE) must be set in production"
+      "SESSION_SECRET (or AAD_SSO_CLIENT_VALUE) must be set in production",
     );
   }
 

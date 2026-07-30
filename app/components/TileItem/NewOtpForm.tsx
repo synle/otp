@@ -58,7 +58,7 @@ function ScanQrCodeView(props: { onScan: (newTotp: string) => void }) {
             }
 
             return aName.localeCompare(bName);
-          })
+          }),
         );
       })
       .catch(function (e1) {
@@ -193,7 +193,7 @@ export default function () {
                     onScan={(newTotp: string) => {
                       const newName = new URL(newTotp).pathname.replace(
                         "//totp/",
-                        ""
+                        "",
                       );
                       setTotp(newTotp);
                       setName(newName);

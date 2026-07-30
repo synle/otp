@@ -200,7 +200,7 @@ function _migrateJsonVaultIfPresent(key: UserKey): void {
 
     try {
       const parsed = JSON.parse(
-        fs.readFileSync(abs, "utf-8")
+        fs.readFileSync(abs, "utf-8"),
       ) as Partial<OtpIdentityResponse>;
       const items = Array.isArray(parsed?.items) ? parsed.items : [];
       _bulkInsert(userId, items);
@@ -233,7 +233,7 @@ function _bulkInsert(userId: string, items: readonly OtpIdentity[]): void {
         item.name,
         item.login?.totp ?? "",
         now,
-        now
+        now,
       );
     }
     db.exec("COMMIT");
@@ -264,7 +264,7 @@ export function getOtpIdentityResponse(key: UserKey): OtpIdentityResponse {
     .prepare(
       `SELECT id, name, totp FROM identities
          WHERE user_id = ?
-         ORDER BY created_at ASC, rowid ASC`
+         ORDER BY created_at ASC, rowid ASC`,
     )
     .all(userId) as Array<{ id: string; name: string; totp: string }>;
 
@@ -289,7 +289,7 @@ export async function createOtpIdentity(
     login: {
       totp: string;
     };
-  }
+  },
 ) {
   const userId = _userIdFor(key);
   _migrateJsonVaultIfPresent(key);
@@ -298,7 +298,7 @@ export async function createOtpIdentity(
   _getDb()
     .prepare(
       `INSERT INTO identities (id, user_id, name, totp, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .run(uuidv4(), userId, body.name, body.login.totp, now, now);
 }
@@ -315,7 +315,7 @@ export async function updateOtpIdentity(
     login: {
       totp: string;
     };
-  }
+  },
 ) {
   const userId = _userIdFor(key);
   _migrateJsonVaultIfPresent(key);
@@ -324,7 +324,7 @@ export async function updateOtpIdentity(
     .prepare(
       `UPDATE identities
           SET name = ?, totp = ?, updated_at = ?
-        WHERE id = ? AND user_id = ?`
+        WHERE id = ? AND user_id = ?`,
     )
     .run(body.name, body.login.totp, Date.now(), id, userId);
 }

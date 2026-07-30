@@ -38,7 +38,7 @@ describe("normalizeMicrosoftProfile", () => {
         mail: null,
         userPrincipalName: null,
         displayName: "Whoever",
-      })
+      }),
     ).toThrow(/missing both mail and userPrincipalName/);
   });
 
