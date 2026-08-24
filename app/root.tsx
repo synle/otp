@@ -34,7 +34,8 @@ import { NewOtpButton } from "~/components/TileList";
 import { getInitials } from "~/utils/frontend/getInitials";
 import { useMeProfile } from "~/utils/frontend/hooks/Auth";
 
-export const links: LinksFunction = () => (cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []);
+export const links: LinksFunction = () =>
+  cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : [];
 
 const theme = createTheme({});
 const queryClient = new QueryClient({

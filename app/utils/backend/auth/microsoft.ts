@@ -115,13 +115,13 @@ export const microsoftProvider: AuthProvider = {
   },
 
   async authenticate({ code, redirectUri, formData }: AuthenticateArgs) {
-    const response = await _getMsal().acquireTokenByCode(({
-	scopes: MICROSOFT_SCOPE,
-	redirectUri,
-	code,
-	client_info: formData?.get('client_info') || '',
-	session_state: formData?.get('session_state') || ''
-}));
+    const response = await _getMsal().acquireTokenByCode({
+      scopes: MICROSOFT_SCOPE,
+      redirectUri,
+      code,
+      client_info: formData?.get("client_info") || "",
+      session_state: formData?.get("session_state") || "",
+    });
 
     const profile = await _getUserInformation(response.accessToken);
     return normalizeMicrosoftProfile(profile);
