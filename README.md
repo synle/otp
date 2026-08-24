@@ -1,16 +1,16 @@
 # otp
 
-A basic web application developed using Remix.js and React. This app offers Single Sign-On (SSO) login via either **Microsoft / Azure AD** or **Google** and enables you to oversee Multi-Factor Authentication (MFA) Time-Based One-Time Password (TOPT) tokens from various providers.
+A basic web application developed using Remix.js and React. This app offers Single Sign-On (SSO) login via either **Microsoft / Azure AD** or **Google** and enables you to oversee Multi-Factor Authentication (MFA) Time-Based One-Time Password (TOTP) tokens from various providers.
 
 ## Background
 
 ### What is OTP?
 
-OTP stands for "One-Time Password." It is a security feature commonly used in two-factor authentication (2FA) systems to enhance the security of online accounts and transactions. OTPs are temporary codes or passwords that are valid for a single use or a short period of time, typically 30 to 60 seconds.
+OTP stands for "One-Time Password." It is a security feature commonly used in two-factor authentication (2FA) systems. OTPs are temporary codes that are valid for a single use or a short period of time, typically 30 to 60 seconds.
 
 ### Why I am doing this?
 
-Numerous apps offer the capability to sync and manage your OTPs. However, many of them suffer from common issues, including limited cross-platform support (restricted to Windows, Mac, Android, or iOS), deficiencies like the absence of search and sorting features, inconsistent user experiences across various platforms, reliance on the vendor for ongoing support, vulnerability due to their large size making them attractive targets for hackers, and more.
+Many apps sync and manage your OTPs, but they suffer from common issues: limited cross-platform support, no search/sorting, inconsistent UX across platforms, vendor lock-in, and a large attack surface that makes them attractive targets for hackers.
 
 ## Tech Stacks
 

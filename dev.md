@@ -74,8 +74,8 @@ npm run dev            # remix dev (hot reload)
 npm run build          # production build into ./build
 npm start              # node index.mjs (serves the build)
 
-npm run typecheck      # tsc --noEmit
-npm run format         # prettier --write
+npm run typecheck      # tsc
+npm run format         # oxfmt --write .
 ```
 
 ## Testing
@@ -106,9 +106,10 @@ npm run coverage       # alias of test-ci; output in ./coverage
   in `beforeEach` and `vi.unstubAllEnvs` in `afterEach`. Examples:
   `app/utils/backend/auth/state.spec.ts`, `redirectUri.spec.ts`,
   `Session.spec.ts`.
-- The `OtpIdentityDAO` writes JSON files relative to `process.cwd()`. Tests
-  `chdir` into a fresh `mkdtempSync` directory in `beforeEach` so they never
-  pollute the repo and stay isolated from each other.
+- The `OtpIdentityDAO` resolves its SQLite file to `${cwd}/otp.db` when
+  `OTP_DB_PATH` is unset. Tests `chdir` into a fresh `mkdtempSync` directory
+  in `beforeEach` so they never pollute the repo and stay isolated from
+  each other.
 
 ### What's currently covered
 
@@ -137,8 +138,8 @@ npm run coverage       # alias of test-ci; output in ./coverage
 3. Use `vi.mock(...)` for heavy deps. Keep mocks above the import of the
    module under test — Vitest hoists them but the order also makes intent
    clear.
-4. Run `npm run test` — Vitest will pick the file up automatically based on
-   the `**/*.spec.{ts,tsx}` glob in `vitest.config.ts`.
+4. Run `npm run test` — Vitest picks the file up automatically based on the
+   spec glob in `vitest.config.ts`.
 
 ## Adding another SSO provider
 
